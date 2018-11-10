@@ -1,0 +1,26 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+MultiListbox	../scrapbook.py	/^class MultiListbox(Frame):$/;"	kind:class	line:3
+__init__	../scrapbook.py	/^    def __init__(self, master, lists):$/;"	kind:member	line:4
+_b2motion	../scrapbook.py	/^    def _b2motion(self, x, y):$/;"	kind:member	line:38
+_button2	../scrapbook.py	/^    def _button2(self, x, y):$/;"	kind:member	line:33
+_scroll	../scrapbook.py	/^    def _scroll(self, *args):$/;"	kind:member	line:43
+_select	../scrapbook.py	/^    def _select(self, y):$/;"	kind:member	line:27
+curselection	../scrapbook.py	/^    def curselection(self):$/;"	kind:member	line:47
+delete	../scrapbook.py	/^    def delete(self, first, last=None):$/;"	kind:member	line:50
+get	../scrapbook.py	/^    def get(self, first, last=None):$/;"	kind:member	line:54
+index	../scrapbook.py	/^    def index(self, index):$/;"	kind:member	line:62
+insert	../scrapbook.py	/^    def insert(self, index, *elements):$/;"	kind:member	line:65
+mlb	../scrapbook.py	/^    mlb = MultiListbox(tk, (('Subject', 40), ('Sender', 20), ('Date', 10)))$/;"	kind:variable	line:98
+scrapbook.py	../scrapbook.py	1;"	kind:file	line:1
+see	../scrapbook.py	/^    def see(self, index):$/;"	kind:member	line:75
+selection_anchor	../scrapbook.py	/^    def selection_anchor(self, index):$/;"	kind:member	line:79
+selection_clear	../scrapbook.py	/^    def selection_clear(self, first, last=None):$/;"	kind:member	line:83
+selection_includes	../scrapbook.py	/^    def selection_includes(self, index):$/;"	kind:member	line:87
+selection_set	../scrapbook.py	/^    def selection_set(self, first, last=None):$/;"	kind:member	line:90
+size	../scrapbook.py	/^    def size(self):$/;"	kind:member	line:72
+tk	../scrapbook.py	/^    tk = Tk()$/;"	kind:variable	line:96
