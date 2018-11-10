@@ -82,8 +82,8 @@ class Tester:
             executor = Executor(filename, bytecode, test_case.test_input)
             try:
                 output = executor.execute()
-                results.append(TestResult(filename, test_case, output.strip(
-                ) == test_case.expected_output.strip(), output))
+                results.append(TestResult(filename, test_case, output.rstrip(
+                ) == test_case.expected_output.rstrip(), output))
             except Exception as e:
                 results.append(TestResult(filename, test_case, False, str(e)))
         return results

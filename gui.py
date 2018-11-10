@@ -1,12 +1,14 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import simpledialog as sd
 from tkinter import scrolledtext as st
 
 MAGIC = '###'
 PADX = 6
 PADY = 6
+READONLY_BG = 'light gray'
 
-instructions_text_source = '''This automarker automatically runs test cases on multiple Python programs and generates a summary report.
+INSTRUCTIONS = '''This automarker automatically runs test cases on multiple Python programs and generates a summary report.
 
 Test cases must be stored in a text file with a .txt extension. Each test case has an input section followed by an output section. Each section must begin with a header line that starts with {0}. The header line is only used to detect the start of a section and is otherwise ignored. The text file can contain multiple test cases by alternating between input and output sections.
 
@@ -14,7 +16,7 @@ For a test case, each line in the input section corresponds to a line of text th
 
 For example, the .txt file on the left has 3 test cases for a simple integer addition problem. Using this file, the automarker will simulate 3 test runs for each Python program. On the right, you can see the 3 simulated test runs for a program that passes 2 out of the 3 test cases.'''.format(MAGIC)
 
-instructions_sample_text = '''{0} Test Case 1: Input
+SAMPLE = '''{0} Test Case 1: Input
 1
 1
 {0} Test Case 1: Output
@@ -30,15 +32,15 @@ instructions_sample_text = '''{0} Test Case 1: Input
 {0} Test Case 3: Output
 3982'''.format(MAGIC)
 
-instructions_run1_text = '''Enter x: 1
+RUN1 = '''Enter x: 1
 Enter y: 1
 2'''
 
-instructions_run2_text = '''Enter x: 2017
+RUN2 = '''Enter x: 2017
 Enter y: -2017
 4034'''
 
-instructions_run3_text = '''Enter x: 2017
+RUN3 = '''Enter x: 2017
 Enter y: 1965
 3982'''
 
@@ -46,20 +48,20 @@ root = tk.Tk()
 main = ttk.Frame(root)
 
 instructions = ttk.Labelframe(main, text='Instructions')
-instructions_text = st.ScrolledText(instructions, wrap='word', width=60)
-instructions_text.insert('0.1', instructions_text_source)
+instructions_text = st.ScrolledText(instructions, wrap='word', background=READONLY_BG, width=60)
+instructions_text.insert('0.1', INSTRUCTIONS)
 instructions_text.config(state='disabled')
-instructions_sample = tk.Text(instructions, wrap='word', width=20, height=15)
-instructions_sample.insert('0.1', instructions_sample_text)
+instructions_sample = tk.Text(instructions, wrap='word', background=READONLY_BG, width=20, height=15)
+instructions_sample.insert('0.1', SAMPLE)
 instructions_sample.config(state='disabled')
-instructions_run1 = tk.Text(instructions, wrap='word', width=20, height=3)
-instructions_run1.insert('0.1', instructions_run1_text)
+instructions_run1 = tk.Text(instructions, wrap='word', background=READONLY_BG, width=20, height=3)
+instructions_run1.insert('0.1', RUN1)
 instructions_run1.config(state='disabled')
-instructions_run2 = tk.Text(instructions, wrap='word', width=20, height=3)
-instructions_run2.insert('0.1', instructions_run2_text)
+instructions_run2 = tk.Text(instructions, wrap='word', background=READONLY_BG, width=20, height=3)
+instructions_run2.insert('0.1', RUN2)
 instructions_run2.config(state='disabled')
-instructions_run3 = tk.Text(instructions, wrap='word', width=20, height=3)
-instructions_run3.insert('0.1', instructions_run3_text)
+instructions_run3 = tk.Text(instructions, wrap='word', background=READONLY_BG, width=20, height=3)
+instructions_run3.insert('0.1', RUN3)
 instructions_run3.config(state='disabled')
 instructions_run1_result = ttk.Label(instructions, text="PASS")
 instructions_run2_result = ttk.Label(instructions, text="FAIL")
@@ -68,47 +70,88 @@ instructions_run3_result = ttk.Label(instructions, text="PASS")
 test_cases = ttk.Labelframe(main, text='Test Cases')
 
 test_cases_header = ttk.Frame(test_cases)
-test_cases_open = ttk.Button(test_cases_header, text="Open...")
-test_cases_filename_var = tk.StringVar()
-test_cases_filename_var.set('No file loaded')
-test_cases_filename = ttk.Entry(test_cases_header, textvariable=test_cases_filename_var)
-test_cases_filename.state(['disabled'])
-test_cases_prev = ttk.Button(test_cases_header, text="<")
-test_cases_title = ttk.Label(test_cases_header, text='No test cases loaded', anchor='center')
-test_cases_next = ttk.Button(test_cases_header, text=">")
+test_cases_load = ttk.Button(test_cases_header, text='Load...')
+test_cases_status = ttk.Label(test_cases_header, text='No test cases loaded')
+test_cases_change = ttk.Button(test_cases_header, text='Change Prefix...')
+test_cases_prefix = ttk.Label(test_cases_header, text='###')
+
+test_cases_nav = ttk.Frame(test_cases)
+test_cases_prev = ttk.Button(test_cases_nav, text="<")
+test_cases_prev.config(state='disabled')
+test_cases_title = ttk.Label(test_cases_nav, text='Test Case - out of -', anchor='center')
+test_cases_next = ttk.Button(test_cases_nav, text=">")
+test_cases_next.config(state='disabled')
 
 test_cases_viewer = ttk.Frame(test_cases)
 test_cases_input_label = ttk.Label(test_cases_viewer, text='Input')
 test_cases_output_label = ttk.Label(test_cases_viewer, text='Expected Output')
-test_cases_input = st.ScrolledText(test_cases_viewer, wrap='word', width=20, height=10)
-test_cases_output = st.ScrolledText(test_cases_viewer, wrap='word', width=20, height=10)
+test_cases_input = st.ScrolledText(test_cases_viewer, wrap='word', background=READONLY_BG, width=30, height=10)
+test_cases_input.config(state='disabled')
+test_cases_output = st.ScrolledText(test_cases_viewer, wrap='word', background=READONLY_BG, width=30, height=10)
+test_cases_output.config(state='disabled')
 
 submissions = ttk.Labelframe(main, text="Python Submissions")
 
-instructions_text.grid(column=0, columnspan=3, row=0, sticky="nsew", padx=PADX, pady=PADY)
-instructions_sample.grid(column=0, row=1, rowspan=3, sticky="nsew", padx=PADX, pady=PADY)
-instructions_run1.grid(column=1, row=1, sticky="nsew", padx=PADX, pady=PADY)
-instructions_run2.grid(column=1, row=2, sticky="nsew", padx=PADX, pady=PADY)
-instructions_run3.grid(column=1, row=3, sticky="nsew", padx=PADX, pady=PADY)
-instructions_run1_result.grid(column=2, row=1, sticky="nsew", padx=PADX, pady=PADY)
-instructions_run2_result.grid(column=2, row=2, sticky="nsew", padx=PADX, pady=PADY)
-instructions_run3_result.grid(column=2, row=3, sticky="nsew", padx=PADX, pady=PADY)
-instructions.columnconfigure(0, weight=1)
-instructions.columnconfigure(1, weight=1)
-instructions.columnconfigure(2, weight=1)
+submissions_header = ttk.Frame(submissions)
+submissions_choose = ttk.Button(submissions_header, text='Choose Folder...')
+submissions_folder = ttk.Label(submissions_header, text='No folder chosen')
+submissions_subfolders_var = tk.StringVar()
+submissions_subfolders = ttk.Checkbutton(submissions_header, text='Include subfolders', variable=submissions_subfolders_var, onvalue='True', offvalue='False')
+submissions_refresh = ttk.Button(submissions_header, text='Search Again')
+submissions_refresh.config(state='disabled')
+submissions_status = ttk.Label(submissions_header, text='No submissions found')
+
+submissions_preview = ttk.Frame(submissions)
+
+submissions_files_label = ttk.Label(submissions_preview, text='File Name')
+submissions_contents_label = ttk.Label(submissions_preview, text='Contents')
+
+submissions_files = ttk.Frame(submissions_preview)
+submissions_files_list = tk.Listbox(submissions_files)
+submissions_files_scrollbar = ttk.Scrollbar(submissions_files, orient='vertical', command=submissions_files_list.yview)
+submissions_files_list.config(yscrollcommand=submissions_files_scrollbar.set)
+
+submissions_contents = st.ScrolledText(submissions_preview, wrap='word', background=READONLY_BG, width=40, height=10)
+submissions_contents.config(state='disabled')
+
+report = ttk.Frame(main)
+report_generate = ttk.Button(report, text='Run Test Cases and Save Report As...')
+report_generate.config(state='disabled')
+report_status = ttk.Label(report, text='Not ready')
+
+instructions_text.grid(column=0, columnspan=3, row=0, sticky='nsew', padx=PADX, pady=PADY)
+instructions_sample.grid(column=0, row=1, rowspan=3, sticky='nsew', padx=PADX, pady=PADY)
+instructions_run1.grid(column=1, row=1, sticky='nsew', padx=PADX, pady=PADY)
+instructions_run2.grid(column=1, row=2, sticky='nsew', padx=PADX, pady=PADY)
+instructions_run3.grid(column=1, row=3, sticky='nsew', padx=PADX, pady=PADY)
+instructions_run1_result.grid(column=2, row=1, sticky='nsew', padx=PADX, pady=PADY)
+instructions_run2_result.grid(column=2, row=2, sticky='nsew', padx=PADX, pady=PADY)
+instructions_run3_result.grid(column=2, row=3, sticky='nsew', padx=PADX, pady=PADY)
+instructions.columnconfigure(0, weight=4, minsize=200)
+instructions.columnconfigure(1, weight=3, minsize=150)
+instructions.columnconfigure(2, weight=0)
 instructions.rowconfigure(0, weight=1)
 instructions.rowconfigure(1, weight=0)
 instructions.rowconfigure(2, weight=0)
 instructions.rowconfigure(3, weight=0)
 
-test_cases_open.grid(column=0, row=0, sticky="nsew", padx=PADX, pady=PADY)
-test_cases_filename.grid(column=1, columnspan=2, row=0, sticky="nsew", padx=PADX, pady=PADY)
-test_cases_prev.grid(column=0, row=1, sticky="nsew", padx=PADX, pady=PADY)
-test_cases_title.grid(column=1, row=1, sticky="nsew", padx=PADX, pady=PADY)
-test_cases_next.grid(column=2, row=1, sticky="nsew", padx=PADX, pady=PADY)
+test_cases_load.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
+test_cases_status.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
+test_cases_change.grid(column=2, row=0, sticky='nsew', padx=PADX, pady=PADY)
+test_cases_prefix.grid(column=3, row=0, sticky='nsew', padx=PADX, pady=PADY)
 test_cases_header.columnconfigure(0, weight=0)
 test_cases_header.columnconfigure(1, weight=1)
+test_cases_header.columnconfigure(2, weight=0)
+test_cases_header.columnconfigure(3, weight=0)
 test_cases_header.rowconfigure(0, weight=0)
+
+test_cases_prev.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
+test_cases_title.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
+test_cases_next.grid(column=2, row=0, sticky='nsew', padx=PADX, pady=PADY)
+test_cases_nav.columnconfigure(0, weight=0)
+test_cases_nav.columnconfigure(1, weight=1)
+test_cases_nav.columnconfigure(2, weight=0)
+test_cases_nav.rowconfigure(0, weight=0)
 
 test_cases_input_label.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
 test_cases_output_label.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
@@ -119,21 +162,63 @@ test_cases_viewer.columnconfigure(1, weight=1, uniform='viewer')
 test_cases_viewer.rowconfigure(0, weight=0)
 test_cases_viewer.rowconfigure(1, weight=1)
 
-test_cases_header.grid(column=0, row=0, sticky="nsew")
-test_cases_viewer.grid(column=0, row=1, sticky="nsew")
+test_cases_header.grid(column=0, row=0, sticky='nsew')
+test_cases_nav.grid(column=0, row=1, sticky='nsew')
+test_cases_viewer.grid(column=0, row=2, sticky='nsew')
 test_cases.columnconfigure(0, weight=1)
 test_cases.rowconfigure(0, weight=0)
-test_cases.rowconfigure(1, weight=1)
+test_cases.rowconfigure(1, weight=0)
+test_cases.rowconfigure(2, weight=1)
 
-instructions.grid(column=0, row=0, rowspan=2, sticky="nsew", ipadx=PADX, ipady=PADY, padx=PADX, pady=PADY)
-test_cases.grid(column=1, row=0, sticky="nsew", ipadx=PADX, ipady=PADY, padx=PADX, pady=PADY)
-submissions.grid(column=1, row=1, sticky="nsew", ipadx=PADX, ipady=PADY, padx=PADX, pady=PADY)
-main.columnconfigure(0, weight=1, uniform='main')
-main.columnconfigure(1, weight=1, uniform='main')
-main.rowconfigure(0, weight=1, uniform='main')
-main.rowconfigure(1, weight=1, uniform='main')
+submissions_choose.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
+submissions_folder.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
+submissions_subfolders.grid(column=2, row=0, sticky='nsew', padx=PADX, pady=PADY)
+submissions_refresh.grid(column=0, row=1, sticky='nsew', padx=PADX, pady=PADY)
+submissions_status.grid(column=1, columnspan=2, row=1, sticky='nsew', padx=PADX, pady=PADY)
+submissions_header.columnconfigure(0, weight=0)
+submissions_header.columnconfigure(1, weight=1)
+submissions_header.columnconfigure(2, weight=0)
+submissions_header.rowconfigure(0, weight=0)
+submissions_header.rowconfigure(1, weight=0)
 
-main.grid(column=0, row=0, sticky="nsew", ipadx=PADX, ipady=PADY)
+submissions_files_list.grid(column=0, row=0, sticky='nsew')
+submissions_files_scrollbar.grid(column=1, row=0, sticky='nsew')
+submissions_files.columnconfigure(0, weight=1)
+submissions_files.columnconfigure(1, weight=0)
+submissions_files.rowconfigure(0, weight=1)
+
+submissions_files_label.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
+submissions_contents_label.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
+submissions_files.grid(column=0, row=1, sticky='nsew', padx=PADX, pady=PADY)
+submissions_contents.grid(column=1, row=1, sticky='nsew', padx=PADX, pady=PADY)
+submissions_preview.columnconfigure(0, weight=1)
+submissions_preview.columnconfigure(1, weight=2)
+submissions_preview.rowconfigure(0, weight=0)
+submissions_preview.rowconfigure(1, weight=1)
+
+submissions_header.grid(column=0, row=0, sticky='nsew')
+submissions_preview.grid(column=0, row=1, sticky='nsew')
+submissions.columnconfigure(0, weight=1)
+submissions.rowconfigure(0, weight=0)
+submissions.rowconfigure(1, weight=1)
+
+report_generate.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
+report_status.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
+report.columnconfigure(0, weight=0)
+report.columnconfigure(1, weight=1)
+report.rowconfigure(0, weight=0)
+
+instructions.grid(column=0, row=0, rowspan=3, sticky='nsew', ipadx=PADX, ipady=PADY, padx=PADX, pady=PADY)
+test_cases.grid(column=1, row=0, sticky='nsew', ipadx=PADX, ipady=PADY, padx=PADX, pady=PADY)
+submissions.grid(column=1, row=1, sticky='nsew', ipadx=PADX, ipady=PADY, padx=PADX, pady=PADY)
+report.grid(column=1, row=2, sticky='nsew', ipadx=PADX, ipady=PADY, padx=PADX, pady=PADY)
+main.columnconfigure(0, weight=1, uniform='mainx')
+main.columnconfigure(1, weight=1, uniform='mainx')
+main.rowconfigure(0, weight=1, uniform='mainy')
+main.rowconfigure(1, weight=1, uniform='mainy')
+main.rowconfigure(2, weight=0)
+
+main.grid(column=0, row=0, sticky='nsew', ipadx=PADX, ipady=PADY)
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
 
