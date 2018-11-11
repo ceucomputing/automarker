@@ -1,0 +1,20 @@
+### Test Case 1: Input
+99999
+-99999
+### Test Case 1: Output
+0
+### Test Case 2: Input
+2017
+-2017
+### Test Case 3: Output
+0
+### Test Case 3: Input
+2017
+1965
+### Test Case 3: Output
+3982
+### Test Case 3: Input
+1
+A
+### Test Case 3: Output
+Error

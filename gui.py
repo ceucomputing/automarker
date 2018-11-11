@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
 from tkinter import simpledialog as sd
+from tkinter import messagebox as mb
 from tkinter import scrolledtext as st
 from unittest import mock
 from os import path
@@ -100,7 +101,7 @@ PADX = 6
 PADY = 6
 READONLY_BG = 'light gray'
 
-INSTRUCTIONS = '''This automarker automatically runs test cases on multiple Python programs and generates a summary self.report.
+INSTRUCTIONS = '''This automarker automatically runs test cases on multiple Python programs and generates a summary report.
 
 Test cases must be stored in a text file with a .txt extension. Each test case has an input section followed by an output section. Each section must begin with a header line that starts with a configurable prefix ({0} by default). The header line is only used to detect the start of a section and is otherwise ignored. The text file can contain multiple test cases by alternating between input and output sections.
 
@@ -156,9 +157,10 @@ class AutoMarker:
         self.prefix = DEFAULT_PREFIX
         self.folder = None
         self.subfolders = False
+        self.files = ['Example', 'Example 2']  # temp
 
     def is_ready(self):
-        return self.test_cases is not None and self.folder is not None
+        return self.test_cases and self.files
 
     def set_test_cases_raw(self, test_cases_raw):
         self.test_cases_raw = test_cases_raw
@@ -182,6 +184,17 @@ class AutoMarker:
         for i in range(1, len(sections), 2):
             self.test_cases.append(TestCase(sections[i], sections[i + 1]))
         return True
+
+    def set_folder(self, folder):
+        self.folder = folder
+        return self._search()
+
+    def self_subfolders(self, subfolders):
+        self.subfolders = subfolders
+        return self._search()
+
+    def _search(self):
+        pass
 
 
 class Gui:
@@ -294,7 +307,9 @@ class Gui:
             self.submissions_preview, text='Contents')
 
         self.submissions_files = ttk.Frame(self.submissions_preview)
-        self.submissions_files_list = tk.Listbox(self.submissions_files)
+        self.submissions_files_var = tk.StringVar()
+        self.submissions_files_list = tk.Listbox(
+            self.submissions_files, listvariable=self.submissions_files_var)
         self.submissions_files_list.bind('<<ListboxSelect>>', self.select_file)
         self.submissions_files_scrollbar = ttk.Scrollbar(
             self.submissions_files, orient='vertical', command=self.submissions_files_list.yview)
@@ -437,23 +452,54 @@ class Gui:
     def load_test_cases(self):
         filename = fd.askopenfilename(filetypes=(
             ('Text Files', '.txt'), ('All Files', '*')))
+        if not filename:
+            return
+        try:
+            with open(filename) as f:
+                test_cases_raw = f.read()
+        except OSError as e:
+            mb.showerror('Error', 'Error loading test cases:\n\n' + str(e))
+            return
+        if self.automarker.set_test_cases_raw(test_cases_raw):
+            mb.showinfo('Success', 'Test cases successfully loaded.')
+        else:
+            mb.showerror('Error', 'Invalid test cases.')
+        self.sync_test_cases()
+        self.sync_report()
 
     def change_prefix(self):
         prefix = sd.askstring(
             "Change Prefix", "Enter new prefix:", initialvalue=self.automarker.prefix)
-        print(prefix)
+        if not prefix:
+            return
+        if self.automarker.set_prefix(prefix):
+            mb.showinfo(
+                'Success', 'Prefix successfully changed and test cases updated.')
+        else:
+            mb.showerror(
+                'Error', 'Prefix successfully changed and test cases cleared.')
+        self.sync_test_cases()
+        self.sync_report()
 
     def prev_test_case(self):
         self.current_test_case = max(0, self.current_test_case - 1)
         self.sync_test_cases()
 
     def next_test_case(self):
-        self.current_test_case = min(len(self.automarker.test_cases) - 1, self.current_test_case + 1)
+        self.current_test_case = min(
+            len(self.automarker.test_cases) - 1, self.current_test_case + 1)
         self.sync_test_cases()
 
     def choose_folder(self):
         folder = fd.askdirectory()
-        print(folder)
+        if not folder:
+            return
+        if self.automarker.set_folder(folder):
+            mb.showinfo('Success', 'Submissions successfully found.')
+        else:
+            mb.showerror('Error', 'Submissions not found.')
+        self.sync_submissions()
+        self.sync_report()
 
     def toggle_subfolders(self):
         pass
@@ -462,7 +508,11 @@ class Gui:
         pass
 
     def select_file(self, event):
-        pass
+        selection = self.submissions_files_list.curselection()
+        if not selection:
+            self._set_readonly_text(self.submissions_contents, '')
+        filename = self.automarker.files[selection[0]]
+        self._set_readonly_text(self.submissions_contents, filename)
 
     def generate_report(self):
         f = fd.asksaveasfile(filetypes=(
@@ -472,14 +522,15 @@ class Gui:
     def _set_readonly_text(self, widget, text):
         widget.config(state='normal')
         widget.replace('1.0', 'end', text)
-        widget.config(state='disabled')        
+        widget.config(state='disabled')
 
     def sync_test_cases(self):
         self.test_cases_prefix.config(text=self.automarker.prefix)
-        if self.automarker.test_cases is None:
+        if not self.automarker.test_cases:
             self.test_cases_status.config(text=TEST_CASES_STATUS_NONE)
             self.test_cases_prev.config(state='disabled')
-            self.test_cases_title.config(text=TEST_CASES_TITLE.format('-', '-'))
+            self.test_cases_title.config(
+                text=TEST_CASES_TITLE.format('-', '-'))
             self.test_cases_next.config(state='disabled')
             self._set_readonly_text(self.test_cases_input, '')
             self._set_readonly_text(self.test_cases_output, '')
@@ -491,18 +542,43 @@ class Gui:
             self.current_test_case = length - 1
         current = self.automarker.test_cases[self.current_test_case]
         self.test_cases_status.config(text=TEST_CASES_STATUS.format(length))
-        self.test_cases_prev.config(state='disabled' if self.current_test_case == 0 else 'normal')
-        self.test_cases_title.config(text=TEST_CASES_TITLE.format(self.current_test_case + 1, length))
-        self.test_cases_next.config(state='disabled' if self.current_test_case == length - 1 else 'normal')
+        self.test_cases_prev.config(
+            state='normal' if self.current_test_case > 0 else 'disabled')
+        self.test_cases_title.config(text=TEST_CASES_TITLE.format(
+            self.current_test_case + 1, length))
+        self.test_cases_next.config(
+            state='normal' if self.current_test_case < length - 1 else 'disabled')
         self._set_readonly_text(self.test_cases_input, current.test_input)
-        self._set_readonly_text(self.test_cases_output, current.expected_output)
-
+        self._set_readonly_text(self.test_cases_output,
+                                current.expected_output)
 
     def sync_submissions(self):
-        pass
+        self.submissions_folder.config(
+            text=self.automarker.folder if self.automarker.folder else SUBMISSIONS_FOLDER_NONE)
+        self.submissions_refresh.config(
+            state='normal' if self.automarker.folder else 'disabled')
+        if not self.automarker.files:
+            self.submissions_status.config(text=SUBMISSIONS_STATUS_NONE)
+            self.submissions_files_var.set([])
+            self.submissions_files_list.config(state='disabled')
+            self._set_readonly_text(self.submissions_contents, '')
+            return
+        self.submissions_status.config(
+            text=SUBMISSIONS_STATUS.format(len(self.automarker.files)))
+        self.submissions_files_list.config(state='normal')
+        self.submissions_files_var.set(self.automarker.files)
+        self.submissions_files_list.select_clear(0, 'end')
+        self._set_readonly_text(self.submissions_contents, '')
 
     def sync_report(self):
-        pass
+        if not self.automarker.is_ready():
+            self.report_generate.config(state='disabled')
+            self.report_status.config(text=REPORT_STATUS_NONE)
+            return
+        self.report_generate.config(state='normal')
+        self.report_status.config(text=REPORT_STATUS.format(
+            len(self.automarker.test_cases), len(self.automarker.files)))
+
 
 app = AutoMarker()
 app.set_test_cases_raw(SAMPLE)
