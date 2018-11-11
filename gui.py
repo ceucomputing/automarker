@@ -6,6 +6,7 @@ from tkinter import messagebox as mb
 from tkinter import scrolledtext as st
 from unittest import mock
 from os import path
+import glob
 import io
 import re
 
@@ -157,7 +158,7 @@ class AutoMarker:
         self.prefix = DEFAULT_PREFIX
         self.folder = None
         self.subfolders = False
-        self.files = ['Example', 'Example 2']  # temp
+        self.files = None
 
     def is_ready(self):
         return self.test_cases and self.files
@@ -171,7 +172,7 @@ class AutoMarker:
         return self._parse()
 
     def _parse(self):
-        if self.test_cases_raw is None:
+        if not self.test_cases_raw:
             self.test_cases = None
             return False
         sections = re.split(r'^' + re.escape(self.prefix) +
@@ -189,13 +190,28 @@ class AutoMarker:
         self.folder = folder
         return self._search()
 
-    def self_subfolders(self, subfolders):
+    def set_subfolders(self, subfolders):
         self.subfolders = subfolders
         return self._search()
 
-    def _search(self):
-        pass
+    def refresh(self):
+        return self._search()
 
+    def _search(self):
+        if not self.folder:
+            self.files = None
+            return False
+        pattern = self.folder
+        if self.subfolders:
+            pattern = path.join(pattern, '**')
+        pattern = path.join(pattern, '*.py')
+        self.files = glob.glob(pattern, recursive=True)
+        return True
+
+    def generate_report(self, f):
+        tester = Tester(self.test_cases)
+        results = [tester.test(filename) for filename in self.files]
+        print(results)
 
 class Gui:
 
@@ -311,13 +327,17 @@ class Gui:
         self.submissions_files_list = tk.Listbox(
             self.submissions_files, listvariable=self.submissions_files_var)
         self.submissions_files_list.bind('<<ListboxSelect>>', self.select_file)
-        self.submissions_files_scrollbar = ttk.Scrollbar(
+        self.submissions_files_scrollbarx = ttk.Scrollbar(
+            self.submissions_files, orient='horizontal', command=self.submissions_files_list.xview)
+        self.submissions_files_list.config(
+            xscrollcommand=self.submissions_files_scrollbarx.set)
+        self.submissions_files_scrollbary = ttk.Scrollbar(
             self.submissions_files, orient='vertical', command=self.submissions_files_list.yview)
         self.submissions_files_list.config(
-            yscrollcommand=self.submissions_files_scrollbar.set)
+            yscrollcommand=self.submissions_files_scrollbary.set)
 
         self.submissions_contents = st.ScrolledText(
-            self.submissions_preview, wrap='word', background=READONLY_BG, width=40, height=10)
+            self.submissions_preview, wrap='none', background=READONLY_BG, width=30, height=10)
         self.submissions_contents.config(state='disabled')
 
         self.report = ttk.Frame(self.main)
@@ -402,17 +422,19 @@ class Gui:
         self.submissions_header.rowconfigure(1, weight=0)
 
         self.submissions_files_list.grid(column=0, row=0, sticky='nsew')
-        self.submissions_files_scrollbar.grid(column=1, row=0, sticky='nsew')
+        self.submissions_files_scrollbary.grid(column=1, row=0, sticky='nsew')
+        self.submissions_files_scrollbarx.grid(column=0, row=1, sticky='nsew')
         self.submissions_files.columnconfigure(0, weight=1)
         self.submissions_files.columnconfigure(1, weight=0)
         self.submissions_files.rowconfigure(0, weight=1)
+        self.submissions_files.rowconfigure(1, weight=0)
 
         self.submissions_files_label.grid(column=0, row=0, **common_kwargs)
         self.submissions_contents_label.grid(column=1, row=0, **common_kwargs)
         self.submissions_files.grid(column=0, row=1, **common_kwargs)
         self.submissions_contents.grid(column=1, row=1, **common_kwargs)
-        self.submissions_preview.columnconfigure(0, weight=1)
-        self.submissions_preview.columnconfigure(1, weight=2)
+        self.submissions_preview.columnconfigure(0, weight=1, uniform='files')
+        self.submissions_preview.columnconfigure(1, weight=1, uniform='files')
         self.submissions_preview.rowconfigure(0, weight=0)
         self.submissions_preview.rowconfigure(1, weight=1)
 
@@ -450,8 +472,8 @@ class Gui:
         self.root.mainloop()
 
     def load_test_cases(self):
-        filename = fd.askopenfilename(filetypes=(
-            ('Text Files', '.txt'), ('All Files', '*')))
+        filename = path.abspath(fd.askopenfilename(filetypes=(
+            ('Text Files', '.txt'), ('All Files', '*'))))
         if not filename:
             return
         try:
@@ -474,10 +496,10 @@ class Gui:
             return
         if self.automarker.set_prefix(prefix):
             mb.showinfo(
-                'Success', 'Prefix successfully changed and test cases updated.')
+                'Success', 'Prefix successfully changed.\n\nTest cases successfully updated.')
         else:
-            mb.showerror(
-                'Error', 'Prefix successfully changed and test cases cleared.')
+            mb.showinfo(
+                'Success', 'Prefix successfully changed.\n\nTest cases cannot be updated and have been cleared.')
         self.sync_test_cases()
         self.sync_report()
 
@@ -491,32 +513,41 @@ class Gui:
         self.sync_test_cases()
 
     def choose_folder(self):
-        folder = fd.askdirectory()
+        folder = path.abspath(fd.askdirectory())
         if not folder:
             return
-        if self.automarker.set_folder(folder):
-            mb.showinfo('Success', 'Submissions successfully found.')
-        else:
-            mb.showerror('Error', 'Submissions not found.')
+        self.automarker.set_folder(folder)
         self.sync_submissions()
         self.sync_report()
 
     def toggle_subfolders(self):
-        pass
+        self.automarker.set_subfolders(self.submissions_subfolders_var.get() == 'True')
+        self.sync_submissions()
+        self.sync_report()
 
     def refresh_files(self):
-        pass
+        self.automarker.refresh()
+        self.sync_submissions()
+        self.sync_report()
 
     def select_file(self, event):
         selection = self.submissions_files_list.curselection()
         if not selection:
             self._set_readonly_text(self.submissions_contents, '')
         filename = self.automarker.files[selection[0]]
-        self._set_readonly_text(self.submissions_contents, filename)
+        try:
+            with open(filename) as f:
+                contents = f.read()
+        except OSError as e:
+            mb.showerror('Error', 'Error loading submission:\n\n' + str(e))
+            self._set_readonly_text(self.submissions_contents, str(e))
+            return
+        self._set_readonly_text(self.submissions_contents, contents)
 
     def generate_report(self):
         f = fd.asksaveasfile(filetypes=(
             ('Text Files', '.txt'), ('All Files', '*')))
+        self.automarker.generate_report(f)
         f.close()
 
     def _set_readonly_text(self, widget, text):
@@ -581,6 +612,5 @@ class Gui:
 
 
 app = AutoMarker()
-app.set_test_cases_raw(SAMPLE)
 gui = Gui(app)
 gui.run()
