@@ -1,14 +1,106 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog as fd
 from tkinter import simpledialog as sd
 from tkinter import scrolledtext as st
+from unittest import mock
+from os import path
+import io
+import re
+
+BASE_SCOPE = {
+    '__name__': '__main__',
+    '__doc__': None,
+    '__package__': None,
+    '__loader__': __loader__,
+    '__spec__': None,
+    '__annotations__': {},
+    '__cached__': None
+}
+
+
+class Executor:
+
+    def __init__(self, filename, bytecode, test_input):
+        self._bytecode = bytecode
+        self._in = io.StringIO(test_input)
+        self._out = io.StringIO()
+        self._scope = BASE_SCOPE.copy()
+        self._scope['__file__'] = filename
+        self._scope['__builtins__'] = __builtins__.__dict__.copy()
+        self._scope['__builtins__']['input'] = self._input
+        self._scope['__builtins__']['print'] = self._print
+
+    def execute(self):
+        exec(self._bytecode, self._scope, self._scope)
+        return self._out.getvalue()
+
+    def _input(self, prompt=None):
+        with mock.patch('sys.stdin', new=self._in):
+            return input()
+
+    def _print(self, *args, **kwargs):
+        with mock.patch('sys.stdout', new=self._out):
+            return print(*args, **kwargs)
+
+
+class TestCase:
+
+    def __init__(self, test_input, expected_output):
+        self.test_input = test_input
+        self.expected_output = expected_output
+
+    def __repr__(self):
+        return repr({
+            'test_input': self.test_input,
+            'expected_output': self.expected_output
+        })
+
+
+class TestResult:
+
+    def __init__(self, filename, test_case, success, output):
+        self.filename = filename
+        self.test_case = test_case
+        self.success = success
+        self.output = output
+
+    def __repr__(self):
+        return repr({
+            'filename': self.filename,
+            'test_case': self.test_case,
+            'success': self.success,
+            'output': self.output
+        })
+
+
+class Tester:
+
+    def __init__(self, test_cases):
+        self.test_cases = test_cases
+
+    def test(self, filename):
+        with open(filename) as f:
+            source = f.read()
+        bytecode = compile(source, filename, 'exec')
+        results = []
+        for test_case in self.test_cases:
+            executor = Executor(filename, bytecode, test_case.test_input)
+            try:
+                output = executor.execute()
+                results.append(TestResult(filename, test_case, output.rstrip(
+                ) == test_case.expected_output.rstrip(), output))
+            except Exception as e:
+                results.append(TestResult(filename, test_case, False, str(e)))
+        return results
+
 
 DEFAULT_PREFIX = '###'
 PADX = 6
 PADY = 6
 READONLY_BG = 'light gray'
 
-INSTRUCTIONS = '''This automarker automatically runs test cases on multiple Python programs and generates a summary report.
+INSTRUCTIONS = '''This automarker automatically runs test cases on multiple Python programs and generates a summary self.report.
 
 Test cases must be stored in a text file with a .txt extension. Each test case has an input section followed by an output section. Each section must begin with a header line that starts with a configurable prefix ({0} by default). The header line is only used to detect the start of a section and is otherwise ignored. The text file can contain multiple test cases by alternating between input and output sections.
 
@@ -55,193 +147,364 @@ SUBMISSIONS_STATUS_NONE = 'No submissions found'
 REPORT_STATUS = 'Ready to run {0} test case(s) on {1} submission(s)'
 REPORT_STATUS_NONE = 'Not ready'
 
-root = tk.Tk()
-main = ttk.Frame(root)
 
-instructions = ttk.Labelframe(main, text='Instructions')
-instructions_text = st.ScrolledText(instructions, wrap='word', background=READONLY_BG, width=60)
-instructions_text.insert('0.1', INSTRUCTIONS)
-instructions_text.config(state='disabled')
+class AutoMarker:
 
-example = ttk.Labelframe(instructions, text='Example')
-example_text = st.ScrolledText(example, wrap='word', background=READONLY_BG, width=60, height=5)
-example_text.insert('0.1', EXAMPLE)
-example_text.config(state='disabled')
-example_sample = tk.Text(example, wrap='word', background=READONLY_BG, width=20, height=15)
-example_sample.insert('0.1', SAMPLE)
-example_sample.config(state='disabled')
-example_run1 = tk.Text(example, wrap='word', background=READONLY_BG, width=20, height=3)
-example_run1.insert('0.1', RUN1)
-example_run1.config(state='disabled')
-example_run2 = tk.Text(example, wrap='word', background=READONLY_BG, width=20, height=3)
-example_run2.insert('0.1', RUN2)
-example_run2.config(state='disabled')
-example_run3 = tk.Text(example, wrap='word', background=READONLY_BG, width=20, height=3)
-example_run3.insert('0.1', RUN3)
-example_run3.config(state='disabled')
-example_run1_result = ttk.Label(example, text="PASS")
-example_run2_result = ttk.Label(example, text="FAIL")
-example_run3_result = ttk.Label(example, text="PASS")
+    def __init__(self):
+        self.test_cases_raw = None
+        self.test_cases = None
+        self.prefix = DEFAULT_PREFIX
+        self.folder = None
+        self.subfolders = False
 
-test_cases = ttk.Labelframe(main, text='Test Cases')
+    def is_ready(self):
+        return self.test_cases is not None and self.folder is not None
 
-test_cases_header = ttk.Frame(test_cases)
-test_cases_load = ttk.Button(test_cases_header, text='Load...')
-test_cases_status = ttk.Label(test_cases_header, text=TEST_CASES_STATUS_NONE)
-test_cases_change = ttk.Button(test_cases_header, text='Change Prefix...')
-test_cases_prefix = ttk.Label(test_cases_header, text=DEFAULT_PREFIX)
+    def set_test_cases_raw(self, test_cases_raw):
+        self.test_cases_raw = test_cases_raw
+        return self._parse()
 
-test_cases_nav = ttk.Frame(test_cases)
-test_cases_prev = ttk.Button(test_cases_nav, text="<")
-test_cases_prev.config(state='disabled')
-test_cases_title = ttk.Label(test_cases_nav, text=TEST_CASES_TITLE.format('-', '-'), anchor='center')
-test_cases_next = ttk.Button(test_cases_nav, text=">")
-test_cases_next.config(state='disabled')
+    def set_prefix(self, prefix):
+        self.prefix = prefix
+        return self._parse()
 
-test_cases_viewer = ttk.Frame(test_cases)
-test_cases_input_label = ttk.Label(test_cases_viewer, text='Input')
-test_cases_output_label = ttk.Label(test_cases_viewer, text='Expected Output')
-test_cases_input = st.ScrolledText(test_cases_viewer, wrap='word', background=READONLY_BG, width=30, height=10)
-test_cases_input.config(state='disabled')
-test_cases_output = st.ScrolledText(test_cases_viewer, wrap='word', background=READONLY_BG, width=30, height=10)
-test_cases_output.config(state='disabled')
+    def _parse(self):
+        if self.test_cases_raw is None:
+            self.test_cases = None
+            return False
+        sections = re.split(r'^' + re.escape(self.prefix) +
+                            r'[^\n]*\n', self.test_cases_raw, flags=re.MULTILINE)
+        if len(sections) < 3 or len(sections) % 2 == 0:
+            self.test_cases_raw = None
+            self.test_cases = None
+            return False
+        self.test_cases = []
+        for i in range(1, len(sections), 2):
+            self.test_cases.append(TestCase(sections[i], sections[i + 1]))
+        return True
 
-submissions = ttk.Labelframe(main, text="Python Submissions")
 
-submissions_header = ttk.Frame(submissions)
-submissions_choose = ttk.Button(submissions_header, text='Choose Folder...')
-submissions_folder = ttk.Label(submissions_header, text=SUBMISSIONS_FOLDER_NONE)
-submissions_subfolders_var = tk.StringVar()
-submissions_subfolders = ttk.Checkbutton(submissions_header, text='Include subfolders', variable=submissions_subfolders_var, onvalue='True', offvalue='False')
-submissions_refresh = ttk.Button(submissions_header, text='Search Again')
-submissions_refresh.config(state='disabled')
-submissions_status = ttk.Label(submissions_header, text=SUBMISSIONS_STATUS_NONE)
+class Gui:
 
-submissions_preview = ttk.Frame(submissions)
+    def __init__(self, automarker):
+        self.automarker = automarker
+        self.current_test_case = None
+        self.current_submission = None
+        self.make_widgets()
+        self.layout_widgets()
+        self.sync_test_cases()
+        self.sync_submissions()
+        self.sync_report()
 
-submissions_files_label = ttk.Label(submissions_preview, text='File Name')
-submissions_contents_label = ttk.Label(submissions_preview, text='Contents')
+    def make_widgets(self):
+        self.root = tk.Tk()
+        self.root.title('automarker')
 
-submissions_files = ttk.Frame(submissions_preview)
-submissions_files_list = tk.Listbox(submissions_files)
-submissions_files_scrollbar = ttk.Scrollbar(submissions_files, orient='vertical', command=submissions_files_list.yview)
-submissions_files_list.config(yscrollcommand=submissions_files_scrollbar.set)
+        self.menu = tk.Menu(self.root)
+        self.root.config(menu=self.menu)
 
-submissions_contents = st.ScrolledText(submissions_preview, wrap='word', background=READONLY_BG, width=40, height=10)
-submissions_contents.config(state='disabled')
+        self.main = ttk.Frame(self.root)
 
-report = ttk.Frame(main)
-report_generate = ttk.Button(report, text='Run Test Cases and Save Report As...')
-report_generate.config(state='disabled')
-report_status = ttk.Label(report, text=REPORT_STATUS_NONE)
+        self.instructions = ttk.Labelframe(self.main, text='Instructions')
+        self.instructions_text = st.ScrolledText(
+            self.instructions, wrap='word', background=READONLY_BG, width=60)
+        self.instructions_text.insert('0.1', INSTRUCTIONS)
+        self.instructions_text.config(state='disabled')
 
-example_text.grid(column=0, columnspan=3, row=0, sticky='nsew', padx=PADX, pady=PADY)
-example_sample.grid(column=0, row=1, rowspan=3, sticky='nsew', padx=PADX, pady=PADY)
-example_run1.grid(column=1, row=1, sticky='nsew', padx=PADX, pady=PADY)
-example_run2.grid(column=1, row=2, sticky='nsew', padx=PADX, pady=PADY)
-example_run3.grid(column=1, row=3, sticky='nsew', padx=PADX, pady=PADY)
-example_run1_result.grid(column=2, row=1, sticky='nsew', padx=PADX, pady=PADY)
-example_run2_result.grid(column=2, row=2, sticky='nsew', padx=PADX, pady=PADY)
-example_run3_result.grid(column=2, row=3, sticky='nsew', padx=PADX, pady=PADY)
-example.columnconfigure(0, weight=4, minsize=200)
-example.columnconfigure(1, weight=3, minsize=150)
-example.columnconfigure(2, weight=0)
-example.rowconfigure(0, weight=0)
-example.rowconfigure(1, weight=0)
-example.rowconfigure(2, weight=0)
-example.rowconfigure(3, weight=0)
+        self.example = ttk.Labelframe(self.instructions, text='Example')
+        self.example_text = st.ScrolledText(
+            self.example, wrap='word', background=READONLY_BG, width=60, height=5)
+        self.example_text.insert('0.1', EXAMPLE)
+        self.example_text.config(state='disabled')
+        self.example_sample = tk.Text(
+            self.example, wrap='word', background=READONLY_BG, width=20, height=15)
+        self.example_sample.insert('0.1', SAMPLE)
+        self.example_sample.config(state='disabled')
+        self.example_run1 = tk.Text(
+            self.example, wrap='word', background=READONLY_BG, width=20, height=3)
+        self.example_run1.insert('0.1', RUN1)
+        self.example_run1.config(state='disabled')
+        self.example_run2 = tk.Text(
+            self.example, wrap='word', background=READONLY_BG, width=20, height=3)
+        self.example_run2.insert('0.1', RUN2)
+        self.example_run2.config(state='disabled')
+        self.example_run3 = tk.Text(
+            self.example, wrap='word', background=READONLY_BG, width=20, height=3)
+        self.example_run3.insert('0.1', RUN3)
+        self.example_run3.config(state='disabled')
+        self.example_run1_result = ttk.Label(self.example, text="PASS")
+        self.example_run2_result = ttk.Label(self.example, text="FAIL")
+        self.example_run3_result = ttk.Label(self.example, text="PASS")
 
-instructions_text.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
-example.grid(column=0, row=1, sticky='nsew', padx=PADX, pady=PADY, ipadx=PADX, ipady=PADY)
-instructions.columnconfigure(0, weight=1)
-instructions.rowconfigure(0, weight=1)
-instructions.rowconfigure(1, weight=0)
+        self.test_cases = ttk.Labelframe(self.main, text='Test Cases')
 
-test_cases_load.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_status.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_change.grid(column=2, row=0, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_prefix.grid(column=3, row=0, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_header.columnconfigure(0, weight=0)
-test_cases_header.columnconfigure(1, weight=1)
-test_cases_header.columnconfigure(2, weight=0)
-test_cases_header.columnconfigure(3, weight=0)
-test_cases_header.rowconfigure(0, weight=0)
+        self.test_cases_header = ttk.Frame(self.test_cases)
+        self.test_cases_load = ttk.Button(
+            self.test_cases_header, text='Load...', command=self.load_test_cases)
+        self.test_cases_status = ttk.Label(
+            self.test_cases_header, text=TEST_CASES_STATUS_NONE)
+        self.test_cases_change = ttk.Button(
+            self.test_cases_header, text='Change Prefix...', command=self.change_prefix)
+        self.test_cases_prefix = ttk.Label(
+            self.test_cases_header, text=DEFAULT_PREFIX)
 
-test_cases_prev.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_title.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_next.grid(column=2, row=0, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_nav.columnconfigure(0, weight=0)
-test_cases_nav.columnconfigure(1, weight=1)
-test_cases_nav.columnconfigure(2, weight=0)
-test_cases_nav.rowconfigure(0, weight=0)
+        self.test_cases_nav = ttk.Frame(self.test_cases)
+        self.test_cases_prev = ttk.Button(
+            self.test_cases_nav, text="<", command=self.prev_test_case)
+        self.test_cases_prev.config(state='disabled')
+        self.test_cases_title = ttk.Label(
+            self.test_cases_nav, text=TEST_CASES_TITLE.format('-', '-'), anchor='center')
+        self.test_cases_next = ttk.Button(
+            self.test_cases_nav, text=">", command=self.next_test_case)
+        self.test_cases_next.config(state='disabled')
 
-test_cases_input_label.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_output_label.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_input.grid(column=0, row=1, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_output.grid(column=1, row=1, sticky='nsew', padx=PADX, pady=PADY)
-test_cases_viewer.columnconfigure(0, weight=1, uniform='viewer')
-test_cases_viewer.columnconfigure(1, weight=1, uniform='viewer')
-test_cases_viewer.rowconfigure(0, weight=0)
-test_cases_viewer.rowconfigure(1, weight=1)
+        self.test_cases_viewer = ttk.Frame(self.test_cases)
+        self.test_cases_input_label = ttk.Label(
+            self.test_cases_viewer, text='Input')
+        self.test_cases_output_label = ttk.Label(
+            self.test_cases_viewer, text='Expected Output')
+        self.test_cases_input = st.ScrolledText(
+            self.test_cases_viewer, wrap='word', background=READONLY_BG, width=30, height=10)
+        self.test_cases_input.config(state='disabled')
+        self.test_cases_output = st.ScrolledText(
+            self.test_cases_viewer, wrap='word', background=READONLY_BG, width=30, height=10)
+        self.test_cases_output.config(state='disabled')
 
-test_cases_header.grid(column=0, row=0, sticky='nsew')
-test_cases_nav.grid(column=0, row=1, sticky='nsew')
-test_cases_viewer.grid(column=0, row=2, sticky='nsew')
-test_cases.columnconfigure(0, weight=1)
-test_cases.rowconfigure(0, weight=0)
-test_cases.rowconfigure(1, weight=0)
-test_cases.rowconfigure(2, weight=1)
+        self.submissions = ttk.Labelframe(self.main, text="Python Submissions")
 
-submissions_choose.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
-submissions_folder.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
-submissions_subfolders.grid(column=2, row=0, sticky='nsew', padx=PADX, pady=PADY)
-submissions_refresh.grid(column=0, row=1, sticky='nsew', padx=PADX, pady=PADY)
-submissions_status.grid(column=1, columnspan=2, row=1, sticky='nsew', padx=PADX, pady=PADY)
-submissions_header.columnconfigure(0, weight=0)
-submissions_header.columnconfigure(1, weight=1)
-submissions_header.columnconfigure(2, weight=0)
-submissions_header.rowconfigure(0, weight=0)
-submissions_header.rowconfigure(1, weight=0)
+        self.submissions_header = ttk.Frame(self.submissions)
+        self.submissions_choose = ttk.Button(
+            self.submissions_header, text='Choose Folder...', command=self.choose_folder)
+        self.submissions_folder = ttk.Label(
+            self.submissions_header, text=SUBMISSIONS_FOLDER_NONE)
+        self.submissions_subfolders_var = tk.StringVar()
+        self.submissions_subfolders = ttk.Checkbutton(
+            self.submissions_header, text='Include subfolders', variable=self.submissions_subfolders_var, onvalue='True', offvalue='False', command=self.toggle_subfolders)
+        self.submissions_refresh = ttk.Button(
+            self.submissions_header, text='Search Again', command=self.refresh_files)
+        self.submissions_refresh.config(state='disabled')
+        self.submissions_status = ttk.Label(
+            self.submissions_header, text=SUBMISSIONS_STATUS_NONE)
 
-submissions_files_list.grid(column=0, row=0, sticky='nsew')
-submissions_files_scrollbar.grid(column=1, row=0, sticky='nsew')
-submissions_files.columnconfigure(0, weight=1)
-submissions_files.columnconfigure(1, weight=0)
-submissions_files.rowconfigure(0, weight=1)
+        self.submissions_preview = ttk.Frame(self.submissions)
 
-submissions_files_label.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
-submissions_contents_label.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
-submissions_files.grid(column=0, row=1, sticky='nsew', padx=PADX, pady=PADY)
-submissions_contents.grid(column=1, row=1, sticky='nsew', padx=PADX, pady=PADY)
-submissions_preview.columnconfigure(0, weight=1)
-submissions_preview.columnconfigure(1, weight=2)
-submissions_preview.rowconfigure(0, weight=0)
-submissions_preview.rowconfigure(1, weight=1)
+        self.submissions_files_label = ttk.Label(
+            self.submissions_preview, text='File Name')
+        self.submissions_contents_label = ttk.Label(
+            self.submissions_preview, text='Contents')
 
-submissions_header.grid(column=0, row=0, sticky='nsew')
-submissions_preview.grid(column=0, row=1, sticky='nsew')
-submissions.columnconfigure(0, weight=1)
-submissions.rowconfigure(0, weight=0)
-submissions.rowconfigure(1, weight=1)
+        self.submissions_files = ttk.Frame(self.submissions_preview)
+        self.submissions_files_list = tk.Listbox(self.submissions_files)
+        self.submissions_files_list.bind('<<ListboxSelect>>', self.select_file)
+        self.submissions_files_scrollbar = ttk.Scrollbar(
+            self.submissions_files, orient='vertical', command=self.submissions_files_list.yview)
+        self.submissions_files_list.config(
+            yscrollcommand=self.submissions_files_scrollbar.set)
 
-report_generate.grid(column=0, row=0, sticky='nsew', padx=PADX, pady=PADY)
-report_status.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY)
-report.columnconfigure(0, weight=0)
-report.columnconfigure(1, weight=1)
-report.rowconfigure(0, weight=0)
+        self.submissions_contents = st.ScrolledText(
+            self.submissions_preview, wrap='word', background=READONLY_BG, width=40, height=10)
+        self.submissions_contents.config(state='disabled')
 
-instructions.grid(column=0, row=0, rowspan=3, sticky='nsew', padx=PADX, pady=PADY, ipadx=PADX, ipady=PADY)
-test_cases.grid(column=1, row=0, sticky='nsew', padx=PADX, pady=PADY, ipadx=PADX, ipady=PADY)
-submissions.grid(column=1, row=1, sticky='nsew', padx=PADX, pady=PADY, ipadx=PADX, ipady=PADY)
-report.grid(column=1, row=2, sticky='nsew', padx=PADX, pady=PADY, ipadx=PADX, ipady=PADY)
-main.columnconfigure(0, weight=1, uniform='mainx')
-main.columnconfigure(1, weight=1, uniform='mainx')
-main.rowconfigure(0, weight=1, uniform='mainy')
-main.rowconfigure(1, weight=1, uniform='mainy')
-main.rowconfigure(2, weight=0)
+        self.report = ttk.Frame(self.main)
+        self.report_generate = ttk.Button(
+            self.report, text='Run Test Cases and Save Report As...', command=self.generate_report)
+        self.report_generate.config(state='disabled')
+        self.report_status = ttk.Label(self.report, text=REPORT_STATUS_NONE)
 
-main.grid(column=0, row=0, sticky='nsew', ipadx=PADX, ipady=PADY)
-root.columnconfigure(0, weight=1)
-root.rowconfigure(0, weight=1)
+    def layout_widgets(self):
+        common_kwargs = {
+            'sticky': 'nsew', 'padx': PADX, 'pady': PADY
+        }
 
-root.mainloop()
+        self.example_text.grid(column=0, columnspan=3, row=0, **common_kwargs)
+        self.example_sample.grid(column=0, row=1, rowspan=3, **common_kwargs)
+        self.example_run1.grid(column=1, row=1, **common_kwargs)
+        self.example_run2.grid(column=1, row=2, **common_kwargs)
+        self.example_run3.grid(column=1, row=3, **common_kwargs)
+        self.example_run1_result.grid(column=2, row=1, **common_kwargs)
+        self.example_run2_result.grid(column=2, row=2, **common_kwargs)
+        self.example_run3_result.grid(column=2, row=3, **common_kwargs)
+        self.example.columnconfigure(0, weight=4, minsize=200)
+        self.example.columnconfigure(1, weight=3, minsize=150)
+        self.example.columnconfigure(2, weight=0)
+        self.example.rowconfigure(0, weight=0)
+        self.example.rowconfigure(1, weight=0)
+        self.example.rowconfigure(2, weight=0)
+        self.example.rowconfigure(3, weight=0)
+
+        self.instructions_text.grid(column=0, row=0, **common_kwargs)
+        self.example.grid(column=0, row=1, ipadx=PADX,
+                          ipady=PADY, **common_kwargs)
+        self.instructions.columnconfigure(0, weight=1)
+        self.instructions.rowconfigure(0, weight=1)
+        self.instructions.rowconfigure(1, weight=0)
+
+        self.test_cases_load.grid(column=0, row=0, **common_kwargs)
+        self.test_cases_status.grid(column=1, row=0, **common_kwargs)
+        self.test_cases_change.grid(column=2, row=0, **common_kwargs)
+        self.test_cases_prefix.grid(column=3, row=0, **common_kwargs)
+        self.test_cases_header.columnconfigure(0, weight=0)
+        self.test_cases_header.columnconfigure(1, weight=1)
+        self.test_cases_header.columnconfigure(2, weight=0)
+        self.test_cases_header.columnconfigure(3, weight=0)
+        self.test_cases_header.rowconfigure(0, weight=0)
+
+        self.test_cases_prev.grid(column=0, row=0, **common_kwargs)
+        self.test_cases_title.grid(column=1, row=0, **common_kwargs)
+        self.test_cases_next.grid(column=2, row=0, **common_kwargs)
+        self.test_cases_nav.columnconfigure(0, weight=0)
+        self.test_cases_nav.columnconfigure(1, weight=1)
+        self.test_cases_nav.columnconfigure(2, weight=0)
+        self.test_cases_nav.rowconfigure(0, weight=0)
+
+        self.test_cases_input_label.grid(column=0, row=0, **common_kwargs)
+        self.test_cases_output_label.grid(column=1, row=0, **common_kwargs)
+        self.test_cases_input.grid(column=0, row=1, **common_kwargs)
+        self.test_cases_output.grid(column=1, row=1, **common_kwargs)
+        self.test_cases_viewer.columnconfigure(0, weight=1, uniform='viewer')
+        self.test_cases_viewer.columnconfigure(1, weight=1, uniform='viewer')
+        self.test_cases_viewer.rowconfigure(0, weight=0)
+        self.test_cases_viewer.rowconfigure(1, weight=1)
+
+        self.test_cases_header.grid(column=0, row=0, sticky='nsew')
+        self.test_cases_nav.grid(column=0, row=1, sticky='nsew')
+        self.test_cases_viewer.grid(column=0, row=2, sticky='nsew')
+        self.test_cases.columnconfigure(0, weight=1)
+        self.test_cases.rowconfigure(0, weight=0)
+        self.test_cases.rowconfigure(1, weight=0)
+        self.test_cases.rowconfigure(2, weight=1)
+
+        self.submissions_choose.grid(column=0, row=0, **common_kwargs)
+        self.submissions_folder.grid(column=1, row=0, **common_kwargs)
+        self.submissions_subfolders.grid(column=2, row=0, **common_kwargs)
+        self.submissions_refresh.grid(column=0, row=1, **common_kwargs)
+        self.submissions_status.grid(
+            column=1, columnspan=2, row=1, **common_kwargs)
+        self.submissions_header.columnconfigure(0, weight=0)
+        self.submissions_header.columnconfigure(1, weight=1)
+        self.submissions_header.columnconfigure(2, weight=0)
+        self.submissions_header.rowconfigure(0, weight=0)
+        self.submissions_header.rowconfigure(1, weight=0)
+
+        self.submissions_files_list.grid(column=0, row=0, sticky='nsew')
+        self.submissions_files_scrollbar.grid(column=1, row=0, sticky='nsew')
+        self.submissions_files.columnconfigure(0, weight=1)
+        self.submissions_files.columnconfigure(1, weight=0)
+        self.submissions_files.rowconfigure(0, weight=1)
+
+        self.submissions_files_label.grid(column=0, row=0, **common_kwargs)
+        self.submissions_contents_label.grid(column=1, row=0, **common_kwargs)
+        self.submissions_files.grid(column=0, row=1, **common_kwargs)
+        self.submissions_contents.grid(column=1, row=1, **common_kwargs)
+        self.submissions_preview.columnconfigure(0, weight=1)
+        self.submissions_preview.columnconfigure(1, weight=2)
+        self.submissions_preview.rowconfigure(0, weight=0)
+        self.submissions_preview.rowconfigure(1, weight=1)
+
+        self.submissions_header.grid(column=0, row=0, sticky='nsew')
+        self.submissions_preview.grid(column=0, row=1, sticky='nsew')
+        self.submissions.columnconfigure(0, weight=1)
+        self.submissions.rowconfigure(0, weight=0)
+        self.submissions.rowconfigure(1, weight=1)
+
+        self.report_generate.grid(column=0, row=0, **common_kwargs)
+        self.report_status.grid(column=1, row=0, **common_kwargs)
+        self.report.columnconfigure(0, weight=0)
+        self.report.columnconfigure(1, weight=1)
+        self.report.rowconfigure(0, weight=0)
+
+        self.instructions.grid(column=0, row=0, rowspan=3,
+                               ipadx=PADX, ipady=PADY, **common_kwargs)
+        self.test_cases.grid(column=1, row=0, ipadx=PADX,
+                             ipady=PADY, **common_kwargs)
+        self.submissions.grid(column=1, row=1, ipadx=PADX,
+                              ipady=PADY, **common_kwargs)
+        self.report.grid(column=1, row=2, ipadx=PADX,
+                         ipady=PADY, **common_kwargs)
+        self.main.columnconfigure(0, weight=1, uniform='mainx')
+        self.main.columnconfigure(1, weight=1, uniform='mainx')
+        self.main.rowconfigure(0, weight=1, uniform='mainy')
+        self.main.rowconfigure(1, weight=1, uniform='mainy')
+        self.main.rowconfigure(2, weight=0)
+
+        self.main.grid(column=0, row=0, sticky='nsew', ipadx=PADX, ipady=PADY)
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
+
+    def run(self):
+        self.root.mainloop()
+
+    def load_test_cases(self):
+        filename = fd.askopenfilename(filetypes=(
+            ('Text Files', '.txt'), ('All Files', '*')))
+
+    def change_prefix(self):
+        prefix = sd.askstring(
+            "Change Prefix", "Enter new prefix:", initialvalue=self.automarker.prefix)
+        print(prefix)
+
+    def prev_test_case(self):
+        self.current_test_case = max(0, self.current_test_case - 1)
+        self.sync_test_cases()
+
+    def next_test_case(self):
+        self.current_test_case = min(len(self.automarker.test_cases) - 1, self.current_test_case + 1)
+        self.sync_test_cases()
+
+    def choose_folder(self):
+        folder = fd.askdirectory()
+        print(folder)
+
+    def toggle_subfolders(self):
+        pass
+
+    def refresh_files(self):
+        pass
+
+    def select_file(self, event):
+        pass
+
+    def generate_report(self):
+        f = fd.asksaveasfile(filetypes=(
+            ('Text Files', '.txt'), ('All Files', '*')))
+        f.close()
+
+    def _set_readonly_text(self, widget, text):
+        widget.config(state='normal')
+        widget.replace('1.0', 'end', text)
+        widget.config(state='disabled')        
+
+    def sync_test_cases(self):
+        self.test_cases_prefix.config(text=self.automarker.prefix)
+        if self.automarker.test_cases is None:
+            self.test_cases_status.config(text=TEST_CASES_STATUS_NONE)
+            self.test_cases_prev.config(state='disabled')
+            self.test_cases_title.config(text=TEST_CASES_TITLE.format('-', '-'))
+            self.test_cases_next.config(state='disabled')
+            self._set_readonly_text(self.test_cases_input, '')
+            self._set_readonly_text(self.test_cases_output, '')
+            return
+        length = len(self.automarker.test_cases)
+        if self.current_test_case is None:
+            self.current_test_case = 0
+        if self.current_test_case >= length:
+            self.current_test_case = length - 1
+        current = self.automarker.test_cases[self.current_test_case]
+        self.test_cases_status.config(text=TEST_CASES_STATUS.format(length))
+        self.test_cases_prev.config(state='disabled' if self.current_test_case == 0 else 'normal')
+        self.test_cases_title.config(text=TEST_CASES_TITLE.format(self.current_test_case + 1, length))
+        self.test_cases_next.config(state='disabled' if self.current_test_case == length - 1 else 'normal')
+        self._set_readonly_text(self.test_cases_input, current.test_input)
+        self._set_readonly_text(self.test_cases_output, current.expected_output)
+
+
+    def sync_submissions(self):
+        pass
+
+    def sync_report(self):
+        pass
+
+app = AutoMarker()
+app.set_test_cases_raw(SAMPLE)
+gui = Gui(app)
+gui.run()
