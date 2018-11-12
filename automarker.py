@@ -1,3 +1,7 @@
+# automarker 0.1
+# Copyright (c) 2018 Ministry of Education, Singapore
+# moe_cpdd_computing_education@moe.edu.sg
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog as fd
@@ -30,9 +34,9 @@ READONLY_BG = 'light gray'
 
 INSTRUCTIONS = '''This automarker automatically runs test cases on multiple Python programs and generates a summary report. To use:
 
-(1) Click 'Change Prefix...' to set the prefix if needed.
+(1) Click 'Change Prefix...' to change the prefix if needed.
 (2) Click 'Load...' and select a .txt file containing test cases.
-(3) Click 'Choose Folder...' and locate the Python programs.
+(3) Click 'Choose Folder...' and choose the programs' location.
 (4) Check 'Use subfolders' if the programs are in subfolders.
 (5) Click 'Generate Report and Save Report As...' and save the report as a .txt file.
 
