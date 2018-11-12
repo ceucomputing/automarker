@@ -10,7 +10,7 @@ grand_total = 0
 for i in range(7):
     total = sum(week_data[i])
     grand_total += total
-    print('Day ' + str(i) + '   ' + str(total) + ' egg(s)')
+    print('Day ' + str(i + 1) + '   ' + str(total) + ' egg(s)')
 
 print()
 

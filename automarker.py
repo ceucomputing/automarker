@@ -836,23 +836,23 @@ class Gui:
 
         self.example = ttk.Labelframe(self.instructions, text='Example')
         self.example_text = st.ScrolledText(
-            self.example, wrap='word', background=READONLY_BG, width=60, height=5)
+            self.example, wrap='none', background=READONLY_BG, width=60, height=5)
         self.example_text.insert('0.1', EXAMPLE)
         self.example_text.config(state='disabled')
         self.example_sample = tk.Text(
-            self.example, wrap='word', background=READONLY_BG, width=20, height=15)
+            self.example, wrap='none', background=READONLY_BG, width=20, height=15)
         self.example_sample.insert('0.1', SAMPLE)
         self.example_sample.config(state='disabled')
         self.example_run1 = tk.Text(
-            self.example, wrap='word', background=READONLY_BG, width=20, height=3)
+            self.example, wrap='none', background=READONLY_BG, width=20, height=3)
         self.example_run1.insert('0.1', RUN1)
         self.example_run1.config(state='disabled')
         self.example_run2 = tk.Text(
-            self.example, wrap='word', background=READONLY_BG, width=20, height=3)
+            self.example, wrap='none', background=READONLY_BG, width=20, height=3)
         self.example_run2.insert('0.1', RUN2)
         self.example_run2.config(state='disabled')
         self.example_run3 = tk.Text(
-            self.example, wrap='word', background=READONLY_BG, width=20, height=3)
+            self.example, wrap='none', background=READONLY_BG, width=20, height=3)
         self.example_run3.insert('0.1', RUN3)
         self.example_run3.config(state='disabled')
         self.example_run1_result = ttk.Label(self.example, text="PASS")
@@ -887,10 +887,10 @@ class Gui:
         self.test_cases_output_label = ttk.Label(
             self.test_cases_viewer, text='Expected Output')
         self.test_cases_input = st.ScrolledText(
-            self.test_cases_viewer, wrap='word', background=READONLY_BG, width=30, height=10)
+            self.test_cases_viewer, wrap='none', background=READONLY_BG, width=30, height=10)
         self.test_cases_input.config(state='disabled')
         self.test_cases_output = st.ScrolledText(
-            self.test_cases_viewer, wrap='word', background=READONLY_BG, width=30, height=10)
+            self.test_cases_viewer, wrap='none', background=READONLY_BG, width=30, height=10)
         self.test_cases_output.config(state='disabled')
 
         self.submissions = ttk.Labelframe(self.main, text="Python Submissions")
