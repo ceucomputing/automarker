@@ -1,4 +1,4 @@
-# automarker 0.1
+# automarker 0.2
 # Copyright (c) 2018 Ministry of Education, Singapore
 # moe_cpdd_computing_education@moe.edu.sg
 
@@ -28,6 +28,8 @@ BASE_SCOPE = {
 }
 
 DEFAULT_PREFIX = '###'
+DEFAULT_FILE_FILTER = '*.py'
+VALID_FILE_FILTER_REGEX = r'[\w\-.*?]+\.py'
 PADX = 6
 PADY = 6
 READONLY_BG = 'light gray'
@@ -723,6 +725,7 @@ class AutoMarker:
         self.prefix = DEFAULT_PREFIX
         self.folder = None
         self.subfolders = False
+        self.file_filter = DEFAULT_FILE_FILTER
         self.files = None
 
     def is_ready(self):
@@ -759,6 +762,10 @@ class AutoMarker:
         self.subfolders = subfolders
         return self._search()
 
+    def set_file_filter(self, file_filter):
+        self.file_filter = file_filter
+        return self._search()
+
     def refresh(self):
         return self._search()
 
@@ -769,7 +776,7 @@ class AutoMarker:
         pattern = self.folder
         if self.subfolders:
             pattern = path.join(pattern, '**')
-        pattern = path.join(pattern, '*.py')
+        pattern = path.join(pattern, self.file_filter)
         self.files = glob.glob(pattern, recursive=True)
         self.files.sort()
         return True
@@ -864,22 +871,17 @@ class Gui:
         self.test_cases_header = ttk.Frame(self.test_cases)
         self.test_cases_load = ttk.Button(
             self.test_cases_header, text='Load...', command=self.load_test_cases)
-        self.test_cases_status = ttk.Label(
-            self.test_cases_header, text=TEST_CASES_STATUS_NONE)
+        self.test_cases_status = ttk.Label(self.test_cases_header)
         self.test_cases_change = ttk.Button(
             self.test_cases_header, text='Change Prefix...', command=self.change_prefix)
-        self.test_cases_prefix = ttk.Label(
-            self.test_cases_header, text=DEFAULT_PREFIX)
+        self.test_cases_prefix = ttk.Label(self.test_cases_header)
 
         self.test_cases_nav = ttk.Frame(self.test_cases)
         self.test_cases_prev = ttk.Button(
             self.test_cases_nav, text="<", command=self.prev_test_case)
-        self.test_cases_prev.config(state='disabled')
-        self.test_cases_title = ttk.Label(
-            self.test_cases_nav, text=TEST_CASES_TITLE.format('-', '-'), anchor='center')
+        self.test_cases_title = ttk.Label(self.test_cases_nav, anchor='center')
         self.test_cases_next = ttk.Button(
             self.test_cases_nav, text=">", command=self.next_test_case)
-        self.test_cases_next.config(state='disabled')
 
         self.test_cases_viewer = ttk.Frame(self.test_cases)
         self.test_cases_input_label = ttk.Label(
@@ -895,19 +897,22 @@ class Gui:
 
         self.submissions = ttk.Labelframe(self.main, text="Python Submissions")
 
-        self.submissions_header = ttk.Frame(self.submissions)
+        self.submissions_header1 = ttk.Frame(self.submissions)
         self.submissions_choose = ttk.Button(
-            self.submissions_header, text='Choose Folder...', command=self.choose_folder)
-        self.submissions_folder = ttk.Label(
-            self.submissions_header, text=SUBMISSIONS_FOLDER_NONE)
+            self.submissions_header1, text='Choose Folder...', command=self.choose_folder)
+        self.submissions_folder = ttk.Label(self.submissions_header1)
         self.submissions_subfolders_var = tk.StringVar()
         self.submissions_subfolders = ttk.Checkbutton(
-            self.submissions_header, text='Include subfolders', variable=self.submissions_subfolders_var, onvalue='True', offvalue='False', command=self.toggle_subfolders)
+            self.submissions_header1, text='Include subfolders', variable=self.submissions_subfolders_var, onvalue='True', offvalue='False', command=self.toggle_subfolders)
+        
+        self.submissions_header2 = ttk.Frame(self.submissions)
         self.submissions_refresh = ttk.Button(
-            self.submissions_header, text='Search Again', command=self.refresh_files)
-        self.submissions_refresh.config(state='disabled')
+            self.submissions_header2, text='Search Again', command=self.refresh_files)
         self.submissions_status = ttk.Label(
-            self.submissions_header, text=SUBMISSIONS_STATUS_NONE)
+            self.submissions_header2, text=SUBMISSIONS_STATUS_NONE)
+        self.submissions_change = ttk.Button(
+            self.submissions_header2, text='Change Filter...', command=self.change_file_filter)
+        self.submissions_filter = ttk.Label(self.submissions_header2)
 
         self.submissions_preview = ttk.Frame(self.submissions)
 
@@ -937,8 +942,7 @@ class Gui:
         self.report = ttk.Frame(self.main)
         self.report_generate = ttk.Button(
             self.report, text='Run Test Cases and Save Report As...', command=self.generate_report)
-        self.report_generate.config(state='disabled')
-        self.report_status = ttk.Label(self.report, text=REPORT_STATUS_NONE)
+        self.report_status = ttk.Label(self.report)
 
     def layout_widgets(self):
         common_kwargs = {
@@ -1006,14 +1010,20 @@ class Gui:
         self.submissions_choose.grid(column=0, row=0, **common_kwargs)
         self.submissions_folder.grid(column=1, row=0, **common_kwargs)
         self.submissions_subfolders.grid(column=2, row=0, **common_kwargs)
-        self.submissions_refresh.grid(column=0, row=1, **common_kwargs)
-        self.submissions_status.grid(
-            column=1, columnspan=2, row=1, **common_kwargs)
-        self.submissions_header.columnconfigure(0, weight=0)
-        self.submissions_header.columnconfigure(1, weight=1)
-        self.submissions_header.columnconfigure(2, weight=0)
-        self.submissions_header.rowconfigure(0, weight=0)
-        self.submissions_header.rowconfigure(1, weight=0)
+        self.submissions_header1.columnconfigure(0, weight=0)
+        self.submissions_header1.columnconfigure(1, weight=1)
+        self.submissions_header1.columnconfigure(2, weight=0)
+        self.submissions_header1.rowconfigure(0, weight=0)
+
+        self.submissions_refresh.grid(column=0, row=0, **common_kwargs)
+        self.submissions_status.grid(column=1, row=0, **common_kwargs)
+        self.submissions_change.grid(column=2, row=0, **common_kwargs)
+        self.submissions_filter.grid(column=3, row=0, **common_kwargs)
+        self.submissions_header2.columnconfigure(0, weight=0)
+        self.submissions_header2.columnconfigure(1, weight=1)
+        self.submissions_header2.columnconfigure(2, weight=0)
+        self.submissions_header2.columnconfigure(3, weight=0)
+        self.submissions_header2.rowconfigure(0, weight=0)
 
         self.submissions_files_list.grid(column=0, row=0, sticky='nsew')
         self.submissions_files_scrollbary.grid(column=1, row=0, sticky='nsew')
@@ -1032,11 +1042,13 @@ class Gui:
         self.submissions_preview.rowconfigure(0, weight=0)
         self.submissions_preview.rowconfigure(1, weight=1)
 
-        self.submissions_header.grid(column=0, row=0, sticky='nsew')
-        self.submissions_preview.grid(column=0, row=1, sticky='nsew')
+        self.submissions_header1.grid(column=0, row=0, sticky='nsew')
+        self.submissions_header2.grid(column=0, row=1, sticky='nsew')
+        self.submissions_preview.grid(column=0, row=2, sticky='nsew')
         self.submissions.columnconfigure(0, weight=1)
         self.submissions.rowconfigure(0, weight=0)
-        self.submissions.rowconfigure(1, weight=1)
+        self.submissions.rowconfigure(1, weight=0)
+        self.submissions.rowconfigure(2, weight=1)
 
         self.report_generate.grid(column=0, row=0, **common_kwargs)
         self.report_status.grid(column=1, row=0, **common_kwargs)
@@ -1124,6 +1136,20 @@ class Gui:
         self.sync_submissions()
         self.sync_report()
 
+    def change_file_filter(self):
+        file_filter = self.automarker.file_filter
+        while True:
+            file_filter = sd.askstring(
+                "Change Filter", "Enter new filter:", initialvalue=file_filter)
+            if not file_filter:
+                return
+            if re.match(VALID_FILE_FILTER_REGEX, file_filter):
+                break
+            mb.showerror('Error', 'Invalid filter. Please try again.')
+        self.automarker.set_file_filter(file_filter)
+        self.sync_submissions()
+        self.sync_report()
+
     def refresh_files(self):
         self.automarker.refresh()
         self.sync_submissions()
@@ -1197,6 +1223,7 @@ class Gui:
             text=self.automarker.folder if self.automarker.folder else SUBMISSIONS_FOLDER_NONE)
         self.submissions_refresh.config(
             state='normal' if self.automarker.folder else 'disabled')
+        self.submissions_filter.config(text=self.automarker.file_filter)
         if not self.automarker.files:
             self.submissions_status.config(text=SUBMISSIONS_STATUS_NONE)
             self.submissions_files_var.set([])

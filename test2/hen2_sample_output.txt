@@ -1,0 +1,153 @@
++--------------------------------+---+---+---+---+---+---+-------+
+|           File name            | 1 | 2 | 3 | 4 | 5 | 6 | Score |
++================================+===+===+===+===+===+===+=======+
+| C:\Example\student_A\HEN2_A.py | 1 | 1 | 1 | 1 | 1 | 1 | 6     |
++--------------------------------+---+---+---+---+---+---+-------+
+| C:\Example\student_B\HEN2_B.py | 1 | 1 | 1 | 1 | 1 | 1 | 6     |
++--------------------------------+---+---+---+---+---+---+-------+
+| C:\Example\student_C\HEN2_C.py | 1 | 0 | 0 | 0 | 0 | 0 | 1     |
++--------------------------------+---+---+---+---+---+---+-------+
+| C:\Example\student_D\HEN2_D.py | 0 | 1 | 1 | 0 | 1 | 1 | 4     |
++--------------------------------+---+---+---+---+---+---+-------+
+
+C:\Example\student_A\HEN2_A.py
+No failed test cases
+
+C:\Example\student_B\HEN2_B.py
+No failed test cases
+
+C:\Example\student_C\HEN2_C.py
++------------------+------------+-----------------------+----------------------+
+| Failed Test Case |   Input    |    Expected Output    |    Actual Output     |
++==================+============+=======================+======================+
+| 2                | 1, 1, 1, 1 | Day 1   4 egg(s)      | Day 1   3 egg(s)     |
+|                  | 1, 1, 1, 1 | Day 2   4 egg(s)      | Day 2   3 egg(s)     |
+|                  | 1, 1, 1, 1 | Day 3   4 egg(s)      | Day 3   2 egg(s)     |
+|                  | 1, 1, 1, 1 | Day 4   4 egg(s)      | Day 4   4 egg(s)     |
+|                  | 1, 1, 1, 1 | Day 5   4 egg(s)      | Day 5   2 egg(s)     |
+|                  | 1, 1, 1, 1 | Day 6   4 egg(s)      | Day 6   3 egg(s)     |
+|                  | 1, 1, 1, 1 | Day 7   4 egg(s)      | Day 7   2 egg(s)     |
+|                  |            |                       |                      |
+|                  |            | Average number of     | Average number of    |
+|                  |            | eggs              7   | eggs              5  |
+|                  |            | Total number of eggs  | Total number of eggs |
+|                  |            | for the week   28     | for the week   19    |
+|                  |            |                       |                      |
+|                  |            |                       | Hen 1   3 egg(s)     |
+|                  |            |                       | Hen 2   3 egg(s)     |
+|                  |            |                       |                      |
++------------------+------------+-----------------------+----------------------+
+| 3                | 0, 0, 0, 0 | Day 1   0 egg(s)      | Day 1   3 egg(s)     |
+|                  | 0, 0, 0, 0 | Day 2   0 egg(s)      | Day 2   3 egg(s)     |
+|                  | 0, 0, 0, 0 | Day 3   0 egg(s)      | Day 3   2 egg(s)     |
+|                  | 0, 0, 0, 0 | Day 4   0 egg(s)      | Day 4   4 egg(s)     |
+|                  | 0, 0, 0, 0 | Day 5   0 egg(s)      | Day 5   2 egg(s)     |
+|                  | 0, 0, 0, 0 | Day 6   0 egg(s)      | Day 6   3 egg(s)     |
+|                  | 0, 0, 0, 0 | Day 7   0 egg(s)      | Day 7   2 egg(s)     |
+|                  |            |                       |                      |
+|                  |            | Average number of     | Average number of    |
+|                  |            | eggs              0   | eggs              5  |
+|                  |            | Total number of eggs  | Total number of eggs |
+|                  |            | for the week   0      | for the week   19    |
+|                  |            |                       |                      |
+|                  |            | Hen 1   0 egg(s)      | Hen 1   3 egg(s)     |
+|                  |            | Hen 2   0 egg(s)      | Hen 2   3 egg(s)     |
+|                  |            | Hen 3   0 egg(s)      |                      |
+|                  |            | Hen 4   0 egg(s)      |                      |
+|                  |            |                       |                      |
++------------------+------------+-----------------------+----------------------+
+| 4                | 1, 0, 0, 0 | Day 1   1 egg(s)      | Day 1   3 egg(s)     |
+|                  | 0, 1, 0, 0 | Day 2   1 egg(s)      | Day 2   3 egg(s)     |
+|                  | 0, 0, 1, 0 | Day 3   1 egg(s)      | Day 3   2 egg(s)     |
+|                  | 0, 0, 0, 1 | Day 4   1 egg(s)      | Day 4   4 egg(s)     |
+|                  | 0, 0, 1, 0 | Day 5   1 egg(s)      | Day 5   2 egg(s)     |
+|                  | 0, 1, 0, 0 | Day 6   1 egg(s)      | Day 6   3 egg(s)     |
+|                  | 1, 0, 0, 0 | Day 7   1 egg(s)      | Day 7   2 egg(s)     |
+|                  |            |                       |                      |
+|                  |            | Average number of     | Average number of    |
+|                  |            | eggs              2   | eggs              5  |
+|                  |            | Total number of eggs  | Total number of eggs |
+|                  |            | for the week   7      | for the week   19    |
+|                  |            |                       |                      |
+|                  |            | Hen 1   2 egg(s)      | Hen 1   3 egg(s)     |
+|                  |            | Hen 2   2 egg(s)      | Hen 2   3 egg(s)     |
+|                  |            | Hen 3   2 egg(s)      |                      |
+|                  |            | Hen 4   1 egg(s)      |                      |
+|                  |            |                       |                      |
++------------------+------------+-----------------------+----------------------+
+| 5                | 1, 1, 0, 1 | Day 1   3 egg(s)      | Day 1   3 egg(s)     |
+|                  | 1, 1, 0, 1 | Day 2   3 egg(s)      | Day 2   3 egg(s)     |
+|                  | 1, 1, 0, 1 | Day 3   3 egg(s)      | Day 3   2 egg(s)     |
+|                  | 1, 1, 0, 1 | Day 4   3 egg(s)      | Day 4   4 egg(s)     |
+|                  | 1, 1, 0, 1 | Day 5   3 egg(s)      | Day 5   2 egg(s)     |
+|                  | 1, 1, 0, 1 | Day 6   3 egg(s)      | Day 6   3 egg(s)     |
+|                  | 1, 1, 0, 1 | Day 7   3 egg(s)      | Day 7   2 egg(s)     |
+|                  |            |                       |                      |
+|                  |            | Average number of     | Average number of    |
+|                  |            | eggs              5   | eggs              5  |
+|                  |            | Total number of eggs  | Total number of eggs |
+|                  |            | for the week   21     | for the week   19    |
+|                  |            |                       |                      |
+|                  |            | Hen 3   0 egg(s)      | Hen 1   3 egg(s)     |
+|                  |            |                       | Hen 2   3 egg(s)     |
+|                  |            |                       |                      |
++------------------+------------+-----------------------+----------------------+
+| 6                | 1, 1, 0, 1 | Day 1   3 egg(s)      | Day 1   3 egg(s)     |
+|                  | 0, 0, 0, 0 | Day 2   0 egg(s)      | Day 2   3 egg(s)     |
+|                  | 1, 1, 1, 1 | Day 3   4 egg(s)      | Day 3   2 egg(s)     |
+|                  | 1, 1, 0, 1 | Day 4   3 egg(s)      | Day 4   4 egg(s)     |
+|                  | 0, 0, 0, 0 | Day 5   0 egg(s)      | Day 5   2 egg(s)     |
+|                  | 0, 1, 0, 0 | Day 6   1 egg(s)      | Day 6   3 egg(s)     |
+|                  | 0, 1, 0, 1 | Day 7   2 egg(s)      | Day 7   2 egg(s)     |
+|                  |            |                       |                      |
+|                  |            | Average number of     | Average number of    |
+|                  |            | eggs              3   | eggs              5  |
+|                  |            | Total number of eggs  | Total number of eggs |
+|                  |            | for the week   13     | for the week   19    |
+|                  |            |                       |                      |
+|                  |            | Hen 1   3 egg(s)      | Hen 1   3 egg(s)     |
+|                  |            | Hen 3   1 egg(s)      | Hen 2   3 egg(s)     |
+|                  |            |                       |                      |
++------------------+------------+-----------------------+----------------------+
+
+C:\Example\student_D\HEN2_D.py
++------------------+------------+-----------------------+----------------------+
+| Failed Test Case |   Input    |    Expected Output    |    Actual Output     |
++==================+============+=======================+======================+
+| 1                | 1, 1, 0, 1 | Day 1   3 egg(s)      | Day 1   3 egg(s)     |
+|                  | 0, 1, 1, 1 | Day 2   3 egg(s)      | Day 2   3 egg(s)     |
+|                  | 0, 0, 1, 1 | Day 3   2 egg(s)      | Day 3   2 egg(s)     |
+|                  | 1, 1, 1, 1 | Day 4   4 egg(s)      | Day 4   4 egg(s)     |
+|                  | 0, 0, 1, 1 | Day 5   2 egg(s)      | Day 5   2 egg(s)     |
+|                  | 1, 0, 1, 1 | Day 6   3 egg(s)      | Day 6   3 egg(s)     |
+|                  | 0, 0, 1, 1 | Day 7   2 egg(s)      | Day 7   2 egg(s)     |
+|                  |            |                       |                      |
+|                  |            | Average number of     | Average number of    |
+|                  |            | eggs              5   | eggs              4  |
+|                  |            | Total number of eggs  | Total number of eggs |
+|                  |            | for the week   19     | for the week   19    |
+|                  |            |                       |                      |
+|                  |            | Hen 1   3 egg(s)      | Hen 1   3 egg(s)     |
+|                  |            | Hen 2   3 egg(s)      | Hen 2   3 egg(s)     |
+|                  |            |                       |                      |
++------------------+------------+-----------------------+----------------------+
+| 4                | 1, 0, 0, 0 | Day 1   1 egg(s)      | Day 1   1 egg(s)     |
+|                  | 0, 1, 0, 0 | Day 2   1 egg(s)      | Day 2   1 egg(s)     |
+|                  | 0, 0, 1, 0 | Day 3   1 egg(s)      | Day 3   1 egg(s)     |
+|                  | 0, 0, 0, 1 | Day 4   1 egg(s)      | Day 4   1 egg(s)     |
+|                  | 0, 0, 1, 0 | Day 5   1 egg(s)      | Day 5   1 egg(s)     |
+|                  | 0, 1, 0, 0 | Day 6   1 egg(s)      | Day 6   1 egg(s)     |
+|                  | 1, 0, 0, 0 | Day 7   1 egg(s)      | Day 7   1 egg(s)     |
+|                  |            |                       |                      |
+|                  |            | Average number of     | Average number of    |
+|                  |            | eggs              2   | eggs              1  |
+|                  |            | Total number of eggs  | Total number of eggs |
+|                  |            | for the week   7      | for the week   7     |
+|                  |            |                       |                      |
+|                  |            | Hen 1   2 egg(s)      | Hen 1   2 egg(s)     |
+|                  |            | Hen 2   2 egg(s)      | Hen 2   2 egg(s)     |
+|                  |            | Hen 3   2 egg(s)      | Hen 3   2 egg(s)     |
+|                  |            | Hen 4   1 egg(s)      | Hen 4   1 egg(s)     |
+|                  |            |                       |                      |
++------------------+------------+-----------------------+----------------------+
+

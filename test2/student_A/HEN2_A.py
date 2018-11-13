@@ -1,4 +1,4 @@
-# Hen1 Problem
+# Hen2 Problem
 # Student A
 
 week_data = []
@@ -19,3 +19,13 @@ print()
 
 print('Average number of eggs              ' + str(round(grand_total / 4)))
 print('Total number of eggs for the week   ' + str(grand_total))
+
+print()
+
+hen_data = [0, 0, 0, 0]
+for i in range(7):
+    for j in range(4):
+        hen_data[j] += week_data[i][j]
+for i in range(4):
+    if hen_data[i] < 4:
+        print('Hen ' + str(i + 1) + '   ' + str(hen_data[i]) + ' egg(s)')

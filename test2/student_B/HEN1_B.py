@@ -1,4 +1,4 @@
-# Hen Problem
+# Hen1 Problem
 # Student B
 
 HENS = 4

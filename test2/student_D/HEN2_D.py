@@ -1,4 +1,4 @@
-# Hen1 Problem
+# Hen2 Problem
 # Student D
 
 day1 = input('Enter eggs laid for day 1: ')
@@ -34,3 +34,14 @@ average_eggs = (hen1_eggs + hen2_eggs + hen3_eggs + hen4_eggs) // 4
 print('Average number of eggs              ' + str(average_eggs))
 total_eggs = hen1_eggs + hen2_eggs + hen3_eggs + hen4_eggs
 print('Total number of eggs for the week   ' + str(total_eggs))
+
+print()
+
+if hen1_eggs < 4:
+    print('Hen 1   ' + str(hen1_eggs) + ' egg(s)')
+if hen2_eggs < 4:
+    print('Hen 2   ' + str(hen2_eggs) + ' egg(s)')
+if hen3_eggs < 4:
+    print('Hen 3   ' + str(hen3_eggs) + ' egg(s)')
+if hen4_eggs < 4:
+    print('Hen 4   ' + str(hen4_eggs) + ' egg(s)')
