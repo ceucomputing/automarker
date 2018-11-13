@@ -1,6 +1,10 @@
-# automarker 0.2
+# automarker 0.2.2
 # Copyright (c) 2018 Ministry of Education, Singapore
 # moe_cpdd_computing_education@moe.edu.sg
+
+# Version History:
+# 0.2.2
+# - Fixed unexpected behaviour when program with syntax error is encountered
 
 import tkinter as tk
 from tkinter import ttk
@@ -36,11 +40,10 @@ READONLY_BG = 'light gray'
 
 INSTRUCTIONS = '''This automarker automatically runs test cases on multiple Python programs and generates a summary report. To use:
 
-(1) Click 'Change Prefix...' to change the prefix if needed.
-(2) Click 'Load...' and select a .txt file containing test cases.
-(3) Click 'Choose Folder...' and choose the programs' location.
-(4) Check 'Use subfolders' if the programs are in subfolders.
-(5) Click 'Generate Report and Save Report As...' and save the report as a .txt file.
+(1) Click 'Load...' and select a .txt file containing test cases.
+(2) Click 'Choose Folder...' and choose the programs' location.
+(3) Check 'Use subfolders' if the programs are in subfolders.
+(4) Click 'Generate Report and Save Report As...' and save the report as a .txt file.
 
 Test cases must be stored in a text file with a .txt extension. Each test case has an input section followed by an output section. Each section must begin with a header line that starts with a configurable prefix ({0} by default). The header line is only used to detect the start of a section and is otherwise ignored. The text file can contain multiple test cases by alternating between input and output sections.
 
@@ -681,20 +684,32 @@ class TestCase:
 
 class TestResult:
 
-    def __init__(self, filename, test_case, success, output):
-        self.filename = filename
+    def __init__(self, test_case, success, output):
         self.test_case = test_case
         self.success = success
         self.output = output
 
     def __repr__(self):
         return repr({
-            'filename': self.filename,
             'test_case': self.test_case,
             'success': self.success,
             'output': self.output
         })
 
+
+class SubmissionResult:
+
+    def __init__(self, filename, test_results=None, compile_error=None):
+        self.filename = filename
+        self.test_results = test_results
+        self.compile_error = compile_error
+
+    def __repr__(self):
+        return repr({
+            'filename': self.filename,
+            'test_results': self.test_results,
+            'compile_error': self.compile_error
+        })
 
 class Tester:
 
@@ -704,17 +719,20 @@ class Tester:
     def test(self, filename):
         with open(filename) as f:
             source = f.read()
-        bytecode = compile(source, filename, 'exec')
+        try:
+            bytecode = compile(source, filename, 'exec')
+        except SyntaxError as e:
+            return SubmissionResult(filename, compile_error=e)
         results = []
         for test_case in self.test_cases:
             executor = Executor(filename, bytecode, test_case.test_input)
             try:
                 output = executor.execute()
-                results.append(TestResult(filename, test_case, output.rstrip(
+                results.append(TestResult(test_case, output.rstrip(
                 ) == test_case.expected_output.rstrip(), output))
             except Exception as e:
-                results.append(TestResult(filename, test_case, False, str(e)))
-        return results
+                results.append(TestResult(test_case, False, str(e)))
+        return SubmissionResult(filename, test_results=results)
 
 
 class AutoMarker:
@@ -789,20 +807,26 @@ class AutoMarker:
                      list(range(1, len(self.test_cases) + 1)) + ['Score'])
         perfects = 0
         for file_results in results:
-            successes = [1 if result.success else 0 for result in file_results]
+            if file_results.compile_error:
+                table.add_row([file_results.filename] + ['-'] * (len(self.test_cases) + 1))
+                continue
+            successes = [1 if result.success else 0 for result in file_results.test_results]
             score = sum(successes)
-            if score == len(file_results):
+            if score == len(file_results.test_results):
                 perfects += 1
-            table.add_row([file_results[0].filename] + successes + [score])
+            table.add_row([file_results.filename] + successes + [score])
         f.write(table.draw() + '\n\n')
         for file_results in results:
-            f.write(file_results[0].filename + '\n')
+            f.write(file_results.filename + '\n')
+            if file_results.compile_error:
+                f.write('Syntax error: ' + str(file_results.compile_error) + '\n\n')
+                continue
             table = Texttable()
             table.header(['Failed Test Case', 'Input',
                           'Expected Output', 'Actual Output'])
             rows = 0
-            for i in range(len(file_results)):
-                result = file_results[i]
+            for i in range(len(file_results.test_results)):
+                result = file_results.test_results[i]
                 if result.success:
                     continue
                 table.add_row([i + 1, result.test_case.test_input,
