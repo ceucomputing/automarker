@@ -1,3 +1,6 @@
+# Hen Problem
+# Student C
+
 data = []
 for day in range(7):
     data += [input('Enter data in a, b, c, d format: ')]

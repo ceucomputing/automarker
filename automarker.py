@@ -836,7 +836,7 @@ class Gui:
 
         self.example = ttk.Labelframe(self.instructions, text='Example')
         self.example_text = st.ScrolledText(
-            self.example, wrap='none', background=READONLY_BG, width=60, height=5)
+            self.example, wrap='word', background=READONLY_BG, width=60, height=5)
         self.example_text.insert('0.1', EXAMPLE)
         self.example_text.config(state='disabled')
         self.example_sample = tk.Text(
@@ -1052,10 +1052,10 @@ class Gui:
                               ipady=PADY, **common_kwargs)
         self.report.grid(column=1, row=2, ipadx=PADX,
                          ipady=PADY, **common_kwargs)
-        self.main.columnconfigure(0, weight=1, uniform='mainx')
-        self.main.columnconfigure(1, weight=1, uniform='mainx')
-        self.main.rowconfigure(0, weight=1, uniform='mainy')
-        self.main.rowconfigure(1, weight=1, uniform='mainy')
+        self.main.columnconfigure(0, weight=0)
+        self.main.columnconfigure(1, weight=1)
+        self.main.rowconfigure(0, weight=1, uniform='main')
+        self.main.rowconfigure(1, weight=1, uniform='main')
         self.main.rowconfigure(2, weight=0)
 
         self.main.grid(column=0, row=0, sticky='nsew', ipadx=PADX, ipady=PADY)

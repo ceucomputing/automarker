@@ -1,26 +1,22 @@
-+----------------------------------------------+---+---+---+---+---+---+-------+
-|                  File name                   | 1 | 2 | 3 | 4 | 5 | 6 | Score |
-+==============================================+===+===+===+===+===+===+=======+
-| /Users/jiunwei/Dropbox/git/automarker/test2/ | 1 | 1 | 1 | 1 | 1 | 1 | 6     |
-| student_A/HEN1_A.py                          |   |   |   |   |   |   |       |
-+----------------------------------------------+---+---+---+---+---+---+-------+
-| /Users/jiunwei/Dropbox/git/automarker/test2/ | 1 | 1 | 1 | 1 | 1 | 1 | 6     |
-| student_B/HEN1_B.py                          |   |   |   |   |   |   |       |
-+----------------------------------------------+---+---+---+---+---+---+-------+
-| /Users/jiunwei/Dropbox/git/automarker/test2/ | 1 | 0 | 0 | 0 | 0 | 0 | 1     |
-| student_C/HEN1_C.py                          |   |   |   |   |   |   |       |
-+----------------------------------------------+---+---+---+---+---+---+-------+
-| /Users/jiunwei/Dropbox/git/automarker/test2/ | 0 | 1 | 1 | 0 | 1 | 1 | 4     |
-| student_D/HEN1_D.py                          |   |   |   |   |   |   |       |
-+----------------------------------------------+---+---+---+---+---+---+-------+
++--------------------------------+---+---+---+---+---+---+-------+
+|           File name            | 1 | 2 | 3 | 4 | 5 | 6 | Score |
++================================+===+===+===+===+===+===+=======+
+| C:\Example\student_A\HEN1_A.py | 1 | 1 | 1 | 1 | 1 | 1 | 6     |
++--------------------------------+---+---+---+---+---+---+-------+
+| C:\Example\student_B\HEN1_B.py | 1 | 1 | 1 | 1 | 1 | 1 | 6     |
++--------------------------------+---+---+---+---+---+---+-------+
+| C:\Example\student_C\HEN1_C.py | 1 | 0 | 0 | 0 | 0 | 0 | 1     |
++--------------------------------+---+---+---+---+---+---+-------+
+| C:\Example\student_D\HEN1_D.py | 0 | 1 | 1 | 0 | 1 | 1 | 4     |
++--------------------------------+---+---+---+---+---+---+-------+
 
-/Users/jiunwei/Dropbox/git/automarker/test2/student_A/HEN1_A.py
+C:\Example\student_A\HEN1_A.py
 No failed test cases
 
-/Users/jiunwei/Dropbox/git/automarker/test2/student_B/HEN1_B.py
+C:\Example\student_B\HEN1_B.py
 No failed test cases
 
-/Users/jiunwei/Dropbox/git/automarker/test2/student_C/HEN1_C.py
+C:\Example\student_C\HEN1_C.py
 +------------------+------------+-----------------------+----------------------+
 | Failed Test Case |   Input    |    Expected Output    |    Actual Output     |
 +==================+============+=======================+======================+
@@ -95,7 +91,7 @@ No failed test cases
 |                  |            |                       |                      |
 +------------------+------------+-----------------------+----------------------+
 
-/Users/jiunwei/Dropbox/git/automarker/test2/student_D/HEN1_D.py
+C:\Example\student_D\HEN1_D.py
 +------------------+------------+-----------------------+----------------------+
 | Failed Test Case |   Input    |    Expected Output    |    Actual Output     |
 +==================+============+=======================+======================+

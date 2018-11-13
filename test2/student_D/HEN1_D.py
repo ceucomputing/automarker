@@ -1,3 +1,6 @@
+# Hen Problem
+# Student D
+
 day1 = input('Enter eggs laid for day 1: ')
 day1_eggs = [int(day1[0]), int(day1[3]), int(day1[6]), int(day1[9])]
 day2 = input('Enter eggs laid for day 2: ')

@@ -1,3 +1,6 @@
+# Hen Problem
+# Student B
+
 HENS = 4
 DAYS = 7
 

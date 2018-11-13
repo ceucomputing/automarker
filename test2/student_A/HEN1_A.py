@@ -1,3 +1,6 @@
+# Hen Problem
+# Student A
+
 week_data = []
 for i in range(7):
     day_input = input('Enter data for day ' + str(i + 1) + ' in the format a, b, c, d: ')[::3]

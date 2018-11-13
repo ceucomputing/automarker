@@ -1,20 +1,16 @@
-+----------------------------------------------------------+---+---+---+-------+
-|                        File name                         | 1 | 2 | 3 | Score |
-+==========================================================+===+===+===+=======+
-| /Users/jiunwei/Dropbox/git/automarker/test1/submission_1 | 1 | 1 | 0 | 2     |
-| .py                                                      |   |   |   |       |
-+----------------------------------------------------------+---+---+---+-------+
-| /Users/jiunwei/Dropbox/git/automarker/test1/submission_2 | 1 | 0 | 1 | 2     |
-| .py                                                      |   |   |   |       |
-+----------------------------------------------------------+---+---+---+-------+
-| /Users/jiunwei/Dropbox/git/automarker/test1/submission_3 | 1 | 1 | 1 | 3     |
-| .py                                                      |   |   |   |       |
-+----------------------------------------------------------+---+---+---+-------+
-| /Users/jiunwei/Dropbox/git/automarker/test1/submission_4 | 1 | 1 | 1 | 3     |
-| .py                                                      |   |   |   |       |
-+----------------------------------------------------------+---+---+---+-------+
++----------------------------+---+---+---+-------+
+|         File name          | 1 | 2 | 3 | Score |
++============================+===+===+===+=======+
+| C:\Example\submission_A.py | 1 | 1 | 0 | 2     |
++----------------------------+---+---+---+-------+
+| C:\Example\submission_B.py | 1 | 0 | 1 | 2     |
++----------------------------+---+---+---+-------+
+| C:\Example\submission_C.py | 1 | 1 | 1 | 3     |
++----------------------------+---+---+---+-------+
+| C:\Example\submission_D.py | 1 | 1 | 1 | 3     |
++----------------------------+---+---+---+-------+
 
-/Users/jiunwei/Dropbox/git/automarker/test1/submission_1.py
+C:\Example\submission_A.py
 +------------------+-------+-----------------+---------------------------------+
 | Failed Test Case | Input | Expected Output |          Actual Output          |
 +==================+=======+=================+=================================+
@@ -23,7 +19,7 @@
 |                  |       |                 |                                 |
 +------------------+-------+-----------------+---------------------------------+
 
-/Users/jiunwei/Dropbox/git/automarker/test1/submission_2.py
+C:\Example\submission_B.py
 +------------------+-------+-----------------+---------------+
 | Failed Test Case | Input | Expected Output | Actual Output |
 +==================+=======+=================+===============+
@@ -32,9 +28,9 @@
 |                  |       |                 |               |
 +------------------+-------+-----------------+---------------+
 
-/Users/jiunwei/Dropbox/git/automarker/test1/submission_3.py
+C:\Example\submission_C.py
 No failed test cases
 
-/Users/jiunwei/Dropbox/git/automarker/test1/submission_4.py
+C:\Example\submission_D.py
 No failed test cases
 

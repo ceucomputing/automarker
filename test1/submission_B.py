@@ -1,3 +1,6 @@
+# Addition Problem
+# Student B
+
 x = input("Enter x: ")
 y = input("Enter y: ")
 if not x.isdigit() or not y.isdigit():
